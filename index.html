@@ -266,6 +266,19 @@
   .ov-b.st-refused{border-left-color:#8a6fb0} .ov-b.st-nodir{border-left-color:#3f7d6e;background:#eef4f2}
   .d-refused{background:#efe9f6;color:#6a4f93} .d-nodir{background:#e2eeea;color:#3f7d6e}
   .key .k-ref{background:#8a6fb0} .key .k-nodir{background:#3f7d6e}
+  /* Collapsible dashboard sections (closed by default) */
+  .fold{border-top:1px solid var(--line)}
+  .fold > summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:48px;cursor:pointer;font-weight:600}
+  .fold > summary::-webkit-details-marker{display:none}
+  .fold > summary span{flex:none}
+  .fold > summary small{flex:1;min-width:0;font-weight:400;font-size:.8rem;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fold > summary::after{content:"";flex:none;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-4px 4px 0 2px;transition:transform .15s}
+  .fold[open] > summary::after{transform:rotate(-135deg);margin-top:4px}
+  .fold[open]{padding-bottom:10px}
+  .fold .cats{margin-bottom:4px}
+  .fold .export{border-top:0;padding-top:0;margin:0}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  @media (prefers-reduced-motion:reduce){.fold > summary::after{transition:none}}
   .hidden{display:none!important}
   .lock{max-width:360px;margin:12vh auto 0}
   @media (prefers-reduced-motion:reduce){.prog i{transition:none}}
@@ -301,9 +314,14 @@
       <div><b id="kTotal">–</b><span>Total</span></div>
     </div>
     <div class="pbig"><i id="kBar"></i></div>
-    <div id="kCats" class="cats"></div>
-    <div class="export up-only">
-      <label for="expList">Download a list of these buildings</label>
+    <details class="fold">
+      <summary><span>Status by category</span><small id="peekCat"></small></summary>
+      <div id="kCats" class="cats"></div>
+    </details>
+    <details class="fold up-only">
+      <summary><span>Download a list</span><small>Excel</small></summary>
+    <div class="export">
+      <label for="expList" class="sr-only">List to download</label>
       <div class="exp-row">
         <select id="expList">
           <option value="all">All buildings</option>
@@ -318,15 +336,20 @@
       </div>
       <p id="expMsg" class="sum-note"></p>
     </div>
-    <h2 class="sum-sub">By area</h2>
-    <div id="areaCards"><p class="ov-empty">Loading…</p></div>
+    </details>
+    <details class="fold">
+      <summary><span>Status by Area</span><small id="peekArea"></small></summary>
+      <div id="areaCards"><p class="ov-empty">Loading…</p></div>
+    </details>
+    <details class="fold">
+      <summary><span>By marketer</span><small id="peekPpl"></small></summary>
+      <table class="ppl">
+        <thead><tr><th>Marketer</th><th>Shot</th><th>Share</th><th>Of target</th></tr></thead>
+        <tbody id="pplBody"></tbody>
+      </table>
+      <p class="sum-note">Share = their part of all completed buildings. Of target = their part of the total to shoot. Completed = shot within its frequency (Active 6, Semi 12, Inactive 24 months). A building is credited to whoever shot it most recently.</p>
+    </details>
     <p id="sumMonth" class="sum-m"></p>
-    <h2 class="sum-sub">By marketer</h2>
-    <table class="ppl">
-      <thead><tr><th>Marketer</th><th>Shot</th><th>Share</th><th>Of target</th></tr></thead>
-      <tbody id="pplBody"></tbody>
-    </table>
-    <p class="sum-note">Share = their part of all completed buildings. Of target = their part of the total to shoot. Completed = shot within its frequency (Active 6, Semi 12, Inactive 24 months). A building is credited to whoever shot it most recently.</p>
     <button id="openAll" class="linkbtn">See all buildings</button>
   </section>
 
@@ -666,6 +689,8 @@ function renderSummary(sum){
     <div><span>Not yet shot</span><b>${t.planned || 0} · ${P100(t.planned)}</b></div>
 `;
   $('#expBtn').textContent = `Download ${view === 'All' ? 'all groups' : GRP[view]} (.xlsx)`;
+  $('#peekCat').textContent = `${P100(t.done + (t.nodir || 0))} completed`;
+  $('#peekArea').textContent = `${SUM.areas.length} areas`;
 
   const CAT = [['done','s-done','Completed (photos)'],['nodir','s-nodir','No directory'],['month','s-month','Due this month'],['overdue','s-over','Overdue'],
                ['refused','s-ref','Visited, not allowed'],['planned','s-plan','Not yet shot']];
@@ -684,6 +709,7 @@ function renderSummary(sum){
     .map(p => ({ name: p.name, n: groups.reduce((a, g) => a + (p[g] || 0), 0),
       areas: Object.entries(p.areas || {}).map(([a, c]) => [a, groups.reduce((x, g) => x + (c[g] || 0), 0)]).filter(([, n]) => n) }))
     .filter(p => p.n).sort((a, b) => b.n - a.n);
+  $('#peekPpl').textContent = ppl.length ? `${ppl.length} marketer${ppl.length > 1 ? 's' : ''}` : 'none yet';
   $('#pplBody').innerHTML = ppl.length ? ppl.map(p => {
     const share = t.done ? Math.round(p.n / t.done * 100) : 0;
     const ofT = t.total ? Math.round(p.n / t.total * 100) : 0;
