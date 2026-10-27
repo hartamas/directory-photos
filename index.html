@@ -256,7 +256,7 @@
       <thead><tr><th>Marketer</th><th>Shot</th><th>Share</th><th>Of target</th></tr></thead>
       <tbody id="pplBody"></tbody>
     </table>
-    <p class="sum-note">Share = their part of all completed buildings. Of target = their part of the total to shoot. A building is credited to whoever shot it first in the cycle.</p>
+    <p class="sum-note">Share = their part of all completed buildings. Of target = their part of the total to shoot. Completed = shot within its frequency (Active 6, Semi 12, Inactive 24 months). A building is credited to whoever shot it most recently.</p>
     <button id="openAll" class="linkbtn">See all buildings</button>
   </section>
 
@@ -525,8 +525,8 @@ function stateLabel(b){
   switch (b.state){
     case 'done': return `Done ${b.done}`;
     case 'overdue': return `Overdue, ${b.planned}`;
-    case 'month': return 'This month';
-    case 'upcoming': return b.planned;
+    case 'month': return 'Due this month';
+    case 'upcoming': return 'Due ' + b.planned;
     default: return 'Not planned';
   }
 }
@@ -547,8 +547,8 @@ function renderSummary(sum){
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-selected', b.dataset.s === view));
 
   $('#sumDue').textContent = view === 'All'
-    ? 'All groups, current cycles'
-    : `Cycle to ${SUM.cycles[view].end}, counting shoots from ${SUM.countingFrom || SUM.cycles[view].start}`;
+    ? 'All groups. Completed = shot within its own frequency.'
+    : `Completed = shot within the last ${SUM.cycles[view].months || (SUM.freq || {})[view]} months. Never-shot buildings follow the starting plan from ${SUM.startLabel}.`;
 
   const t = pick(SUM.totals, view);
   const pct = t.total ? Math.round(t.done / t.total * 100) : 0;
@@ -818,7 +818,7 @@ function itemHtml(b, area, showArea){
   const sel = S.building && S.building.name === b.name && $('#area').value === area;
   return `
     <button class="item st-${b.state}" role="option" aria-selected="${sel}" data-n="${esc(b.name)}" data-a="${esc(area)}">
-      <span class="n"><b>${showArea ? `<span class="abadge">${esc(area)}</span>` : ''}${esc(b.label || b.name)}${b.addon ? '<span class="addon-tag">ADDED</span>' : ''}</b><small><span class="grp">${GRP[b.status]}</span>${b.street ? ', ' + esc(b.street) : ''}${b.last ? ', last ' + esc(b.last) : ''}</small></span>
+      <span class="n"><b>${showArea ? `<span class="abadge">${esc(area)}</span>` : ''}${esc(b.label || b.name)}${b.addon ? '<span class="addon-tag">ADDED</span>' : ''}</b><small><span class="grp">${GRP[b.status]}</span>${b.street ? ', ' + esc(b.street) : ''}${b.last ? ', last ' + esc(b.last) : ', never shot'}${b.state === 'done' && b.planned ? ', next due ' + esc(b.planned) : ''}</small></span>
       <span class="tag d-${b.state}">${esc(stateLabel(b))}</span>
     </button>`;
 }
