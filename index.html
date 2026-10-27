@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Directory Photos</title>
+<meta name="theme-color" content="#17251f">
+<meta name="apple-mobile-web-app-title" content="Directory">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board:#17251f; --brass:#c9a24a; --stone:#eef0ec; --ink:#1d2320; --muted:#5f6a64;
+    --line:#d5dad5; --act:#1f6f5c; --semi:#5c9a3c; --inact:#8a918d; --late:#b3261e; --soon:#b7791f;
+    --r:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--stone);color:var(--ink);
+    font:16px/1.45 Barlow,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+  main{max-width:560px;margin:0 auto;padding:16px 16px calc(120px + env(safe-area-inset-bottom))}
+  h1{font:600 1.35rem/1.2 "Barlow Condensed",Barlow,sans-serif;margin:4px 0 16px}
+  label{display:block;font-weight:600;font-size:.9rem;margin:18px 0 6px}
+  select,input[type=text],input[type=date],input[type=password]{
+    width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:var(--r);background:#fff;color:var(--ink);min-height:48px}
+  select:focus,input:focus,button:focus-visible{outline:3px solid var(--brass);outline-offset:1px}
+  .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+  .row > div{min-width:0}
+  input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;text-align:left}
+  input[type=date]::-webkit-date-and-time-value{text-align:left}
+  .row label{margin-top:18px}
+
+  /* The one bold element: the lobby-board preview of what will be saved */
+  .board{background:var(--board);color:#e9e4d4;border-radius:6px;padding:16px 16px 14px;margin:20px 0 4px;
+    border:2px solid #0e1712;box-shadow:inset 0 0 0 1px rgba(201,162,74,.35)}
+  .board .bname{font:600 1.5rem/1.15 "Barlow Condensed",sans-serif;color:var(--brass);letter-spacing:.01em;word-break:break-word}
+  .board .meta{font-size:.85rem;opacity:.8;margin-top:6px}
+  .board .files{margin-top:10px;font-size:.85rem;color:#cfc8b3;word-break:break-all}
+  .board.empty .bname{color:#7d8a83}
+
+  .search{position:relative}
+  .list{margin-top:8px;max-height:44vh;overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:#fff}
+  .item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;color:inherit;background:none;
+    border:0;border-bottom:1px solid var(--line);padding:12px;min-height:56px;cursor:pointer}
+  .item:last-child{border-bottom:0}
+  .item[aria-selected=true]{background:#e6efe9}
+  .item .n{flex:1;min-width:0}
+  .item .n b{display:block;font-weight:600}
+  .item .n small{color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .s-Active .dot{background:var(--act)} .s-Semi-active .dot{background:var(--semi)} .s-Inactive .dot{background:var(--inact)}
+  .tag{font-size:.75rem;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .d-overdue{background:#fbe9e7;color:var(--late)} .d-soon{background:#fdf3e1;color:var(--soon)}
+  .d-none{background:#eef0ec;color:var(--muted)} .d-ok{background:#e6efe9;color:var(--act)}
+  .legend{display:flex;gap:14px;font-size:.8rem;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+
+  .pick{display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed #9fb0a6;border-radius:var(--r);
+    background:#fff;min-height:64px;font-weight:600;cursor:pointer}
+  .pick input{position:absolute;width:1px;height:1px;opacity:0}
+  .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}
+  .th{position:relative;aspect-ratio:3/4;border-radius:8px;overflow:hidden;background:#dfe3df}
+  .th img{width:100%;height:100%;object-fit:cover;display:block}
+  .th .seq{position:absolute;left:6px;top:6px;background:var(--board);color:var(--brass);font:600 .8rem "Barlow Condensed";padding:2px 7px;border-radius:4px}
+  .th .x{position:absolute;right:4px;top:4px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:18px;cursor:pointer}
+  .th.ok::after,.th.err::after{content:"";position:absolute;inset:0;border:4px solid var(--act);border-radius:8px}
+  .th.err::after{border-color:var(--late)}
+  .th.busy img{opacity:.45}
+
+  .bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+  .bar .in{max-width:560px;margin:0 auto}
+  .btn{width:100%;min-height:52px;border:0;border-radius:var(--r);background:var(--board);color:#fff;font:600 1.05rem Barlow,sans-serif;cursor:pointer}
+  .btn:disabled{background:#a9b3ad;cursor:not-allowed}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);margin-top:8px}
+  .prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:10px;display:none}
+  .prog i{display:block;height:100%;width:0;background:var(--brass);transition:width .2s}
+  .msg{font-size:.9rem;margin:0 0 10px}
+  .msg.err{color:var(--late)} .msg.ok{color:var(--act)}
+  .msg a{color:inherit;font-weight:600}
+
+  /* Progress dashboard */
+  .sum{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:6px}
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);background:var(--stone);border-radius:8px;padding:3px;gap:3px}
+  .seg button{font:600 .9rem Barlow,sans-serif;border:0;background:none;color:var(--muted);padding:8px 0;border-radius:6px;min-height:38px;cursor:pointer}
+  .seg button[aria-selected=true]{background:var(--board);color:#fff}
+  .sum-due{margin:10px 0 4px;font-size:.85rem;color:var(--muted)}
+  .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+  .kpi div{display:flex;flex-direction:column}
+  .kpi b{font:600 2rem/1 "Barlow Condensed",sans-serif;color:var(--act)}
+  .kpi .left b{color:var(--ink)}
+  .kpi div:last-child b{color:var(--muted)}
+  .kpi span{font-size:.8rem;color:var(--muted);margin-top:2px}
+  .pbig{height:8px;background:#e3e7e3;border-radius:4px;overflow:hidden;margin:10px 0 12px}
+  .pbig i{display:block;height:100%;width:0;background:var(--act);transition:width .3s}
+  .sum table{width:100%;border-collapse:collapse;font-size:.9rem}
+  .sum th{font-weight:600;font-size:.78rem;color:var(--muted);text-align:right;padding:0 4px 6px}
+  .sum td{padding:8px 4px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+  .sum th:first-child,.sum td:first-child{text-align:left}
+  .sum td.done{color:var(--act);font-weight:600}
+  .sum td.left{font-weight:600}
+  .sum td.pr{width:30%}
+  .sum td.pr .pb{height:6px;background:#e3e7e3;border-radius:3px;overflow:hidden}
+  .sum td.pr .pb i{display:block;height:100%;background:var(--act)}
+  .sum td.pr small{display:block;font-size:.72rem;color:var(--muted);margin-top:2px}
+  .sum td.pr small.od{color:var(--late)}
+  .sum tfoot td{font-weight:600;border-top:2px solid var(--ink)}
+  .sum-m{margin:10px 0 0;font-size:.85rem;color:var(--muted)}
+  .sum-m b{color:var(--ink)}
+  @media (prefers-reduced-motion:reduce){.pbig i{transition:none}}
+  .d-month{background:#fdf3e1;color:var(--soon)} .d-upcoming,.d-unplanned{background:#eef0ec;color:var(--muted)}
+  .d-done{background:#e6efe9;color:var(--act)}
+  /* Shot-state colours: row edge + tint */
+  .item{border-left:5px solid #c4cbc6}
+  .item.st-done{border-left-color:var(--act);background:#eef6f1}
+  .item.st-overdue{border-left-color:var(--late)}
+  .item.st-month{border-left-color:var(--soon)}
+  .item .grp{font-weight:600;color:var(--ink)}
+  .key{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-top:8px}
+  .key span{display:inline-flex;align-items:center;gap:5px}
+  .key i{width:12px;height:12px;border-radius:2px;background:#c4cbc6}
+  .key .k-done{background:var(--act)} .key .k-overdue{background:var(--late)} .key .k-month{background:var(--soon)}
+  .filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .chip{font:600 .85rem Barlow,sans-serif;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:7px 12px;min-height:36px;cursor:pointer}
+  .chip[aria-pressed=true]{background:var(--board);color:#fff;border-color:var(--board)}
+  .sum tbody tr{cursor:pointer}
+  .sum tbody tr:active{background:#f3f5f3}
+  .linkbtn{display:block;width:100%;margin-top:10px;font:600 .95rem Barlow,sans-serif;background:none;border:1px solid var(--line);border-radius:8px;min-height:44px;color:var(--ink);cursor:pointer}
+
+  /* All-buildings overview */
+  .ov-area{background:#fff;border:1px solid var(--line);border-radius:var(--r);margin-top:12px;overflow:hidden}
+  .ov-area>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:12px;cursor:pointer;font:600 1.1rem "Barlow Condensed",sans-serif}
+  .ov-area>summary::-webkit-details-marker{display:none}
+  .ov-area>summary small{font:500 .85rem Barlow,sans-serif;color:var(--muted)}
+  .ov-grp{padding:0 12px 10px}
+  .ov-grp h3{font-size:.85rem;margin:6px 0;color:var(--muted);font-weight:600}
+  .ov-grp h3 b{color:var(--ink)}
+  .ov-list{display:flex;flex-direction:column;gap:4px}
+  .ov-b{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;font:inherit;font-size:.9rem;color:inherit;
+    background:#fff;border:1px solid var(--line);border-left:5px solid #c4cbc6;border-radius:6px;padding:8px 10px;min-height:44px;cursor:pointer}
+  .ov-b.st-done{border-left-color:var(--act);background:#eef6f1}
+  .ov-b.st-overdue{border-left-color:var(--late)} .ov-b.st-month{border-left-color:var(--soon)}
+  .ov-b span:first-child{min-width:0;overflow-wrap:anywhere}
+  .ov-empty{color:var(--muted);font-size:.85rem;padding:4px 0}
+  .ov-top{padding:0 0 4px}
+  .sum-sub{font:600 1.05rem "Barlow Condensed",sans-serif;margin:16px 0 6px}
+  .ppl td.nm{font-weight:600}
+  .ppl td.ofbar{width:34%}
+  .ppl .pb{height:6px;background:#e3e7e3;border-radius:3px;overflow:hidden}
+  .ppl .pb i{display:block;height:100%;background:var(--brass)}
+  .ppl small{display:block;font-size:.72rem;color:var(--muted);margin-top:2px;text-align:right}
+  .sum-note{font-size:.75rem;color:var(--muted);margin:6px 0 0}
+  /* Photos screen */
+  .shoot{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-top:12px}
+  .shoot-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+  .shoot-h b{font:600 1.05rem "Barlow Condensed",sans-serif}
+  .shoot-h small{color:var(--muted)}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+  .ptile{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--stone)}
+  .ptile .ph{aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.8rem;background:#dfe3df}
+  .ptile .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .ptile .pn{font-size:.75rem;padding:6px 8px 0;overflow-wrap:anywhere;color:var(--muted)}
+  .ptile button{width:100%;min-height:44px;border:0;border-top:1px solid var(--line);background:#fff;font:600 .9rem Barlow,sans-serif;color:var(--ink);cursor:pointer;margin-top:6px}
+  .zipbtn{font:600 .85rem Barlow,sans-serif;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;min-height:40px;cursor:pointer;white-space:nowrap}
+  .ptile .ph{cursor:zoom-in}
+  .viewer{position:fixed;inset:0;background:#0b100d;z-index:50;display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  .vtop{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;color:#d8ddd9;font-size:.85rem}
+  .vtop span{overflow-wrap:anywhere}
+  .vtop button{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:20px;flex:none;cursor:pointer}
+  .vstage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:auto;touch-action:pinch-zoom pan-x pan-y}
+  .vstage img{max-width:100%;max-height:100%;object-fit:contain}
+  .vstage p{color:#9aa39e;position:absolute}
+  .vbar{display:grid;grid-template-columns:56px 1fr 56px;gap:10px;padding:10px 12px}
+  .vbar button{min-height:48px;border-radius:10px;border:0;font:600 1rem Barlow,sans-serif;background:#fff;color:var(--ink);cursor:pointer}
+  .vbar button:disabled{opacity:.35}
+  .abadge{display:inline-block;font-size:.72rem;font-weight:600;background:var(--board);color:#fff;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:1px}
+  .pick.off{border-color:var(--line);background:#f4f5f3;color:var(--muted);cursor:not-allowed}
+  select.need{outline:3px solid var(--late);outline-offset:1px}
+  /* Sign-in, user bar, roles */
+  .gate-icon{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto 12px}
+  #gate{text-align:center}
+  .gate-sub{color:var(--muted);margin:-8px 0 22px}
+  #gsi{display:flex;justify-content:center;min-height:44px}
+  .gate-note{font-size:.82rem;color:var(--muted);margin-top:22px}
+  .userbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin:-4px 0 10px}
+  .userbar b{color:var(--ink)}
+  .rolebadge{font-size:.72rem;font-weight:600;background:#e3e7e3;color:var(--ink);border-radius:4px;padding:1px 6px}
+  .ub-btn{margin-left:auto;font:600 .82rem Barlow,sans-serif;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;min-height:34px;cursor:pointer}
+  .ub-btn + .ub-btn{margin-left:0}
+  body[data-role="Viewer"] .up-only{display:none!important}
+  body[data-role="Viewer"] .vbar{grid-template-columns:1fr 1fr}
+  body[data-role="Viewer"] .vstage img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;pointer-events:none}
+  .addon-tag{font-size:.7rem;font-weight:600;color:var(--soon);margin-left:6px}
+  /* Add building */
+  .freq{display:flex;flex-direction:column;gap:8px}
+  .freq label{display:flex;align-items:center;gap:10px;margin:0;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px;min-height:48px;cursor:pointer}
+  .freq label small{font-weight:400;color:var(--muted);margin-left:auto}
+  .freq input{width:20px;height:20px;accent-color:var(--board)}
+  .pd-item .n small{color:var(--muted)}
+  /* Users */
+  .uform{display:grid;gap:4px}
+  .uform .chk{display:flex;align-items:center;gap:10px;font-weight:600;margin:12px 0 4px}
+  .uform .chk input{width:22px;height:22px;accent-color:var(--board)}
+  .urow{display:flex;justify-content:space-between;gap:8px;align-items:center;width:100%;text-align:left;font:inherit;color:inherit;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:6px;cursor:pointer;min-height:52px}
+  .urow.off{opacity:.55}
+  .urow small{display:block;color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}
+  .addon-note{display:block;font-size:.7rem;color:var(--soon);font-weight:600}
+  .hidden{display:none!important}
+  .lock{max-width:360px;margin:12vh auto 0}
+  @media (prefers-reduced-motion:reduce){.prog i{transition:none}}
+</style>
+</head>
+<body>
+
+<main id="gate" class="lock">
+  <img src="icon-192.png" alt="" class="gate-icon">
+  <h1>Directory Photos</h1>
+  <p class="gate-sub">Hartamas tenant directory shooting</p>
+  <div id="gsi"></div>
+  <p id="gateMsg" class="msg" role="status"></p>
+  <p class="gate-note">Sign in with the Gmail address your admin added.<br>Not on the list yet? Please ask your admin.</p>
+</main>
+
+<main id="app" class="hidden">
+  <h1>Tenant directory photos</h1>
+  <div class="userbar">Signed in as <b id="meName"></b><span id="meRole" class="rolebadge"></span>
+    <button id="openUsers" class="ub-btn hidden">Users</button><button id="signOut" class="ub-btn">Sign out</button></div>
+
+  <section id="sum" class="sum" aria-label="Shooting progress">
+    <div class="seg" role="tablist" aria-label="Building group">
+      <button role="tab" data-s="Active" aria-selected="true">Active</button>
+      <button role="tab" data-s="Semi-active" aria-selected="false">Semi</button>
+      <button role="tab" data-s="Inactive" aria-selected="false">Inactive</button>
+      <button role="tab" data-s="All" aria-selected="false">All</button>
+    </div>
+    <p id="sumDue" class="sum-due"></p>
+    <div class="kpi">
+      <div><b id="kDone">–</b><span>Completed</span></div>
+      <div class="left"><b id="kLeft">–</b><span>Left to shoot</span></div>
+      <div><b id="kTotal">–</b><span>Total</span></div>
+    </div>
+    <div class="pbig"><i id="kBar"></i></div>
+    <table>
+      <thead><tr><th>Area</th><th>Done</th><th>Left</th><th>Total</th><th>Progress</th></tr></thead>
+      <tbody id="sumBody"><tr><td colspan="5">Loading…</td></tr></tbody>
+      <tfoot id="sumFoot"></tfoot>
+    </table>
+    <p id="sumMonth" class="sum-m"></p>
+    <h2 class="sum-sub">By marketer</h2>
+    <table class="ppl">
+      <thead><tr><th>Marketer</th><th>Shot</th><th>Share</th><th>Of target</th></tr></thead>
+      <tbody id="pplBody"></tbody>
+    </table>
+    <p class="sum-note">Share = their part of all completed buildings. Of target = their part of the total to shoot. A building is credited to whoever shot it first in the cycle.</p>
+    <button id="openAll" class="linkbtn">See all buildings</button>
+  </section>
+
+  <div class="row">
+    <div><label for="area">Area</label><select id="area"></select></div>
+    <div class="up-only"><label for="date">Shoot date</label><input id="date" type="date"></div>
+  </div>
+
+  <label for="q">Building</label>
+  <div class="search"><input id="q" type="text" placeholder="Search all areas: building or street" autocomplete="off"></div>
+  <div class="filters" id="fGroup" aria-label="Filter by group">
+    <button class="chip" data-g="All" aria-pressed="true">All</button>
+    <button class="chip" data-g="Active" aria-pressed="false">Active</button>
+    <button class="chip" data-g="Semi-active" aria-pressed="false">Semi</button>
+    <button class="chip" data-g="Inactive" aria-pressed="false">Inactive</button>
+    <button class="chip" id="fNot" aria-pressed="false">Not shot only</button>
+  </div>
+  <div class="key">
+    <span><i class="k-done"></i>Shot</span><span><i class="k-overdue"></i>Overdue</span>
+    <span><i class="k-month"></i>Due this month</span><span><i></i>Later</span>
+  </div>
+  <div id="list" class="list" role="listbox" aria-label="Buildings"></div>
+  <button id="openAdd" class="linkbtn up-only">+ Add a building that is not in the list</button>
+  <input id="who" type="hidden">
+
+  <div id="board" class="board empty" aria-live="polite">
+    <div class="bname">Choose a building</div>
+    <div class="meta"></div>
+    <div class="files"></div>
+  </div>
+  <button id="viewPhotos" class="linkbtn hidden">View photos of this building</button>
+
+  <label class="up-only">Photos</label>
+  <label class="pick up-only" id="pick" for="files"><span id="pickTxt">Add photos</span><input id="files" type="file" accept="image/*" multiple></label>
+  <div id="thumbs" class="thumbs up-only"></div>
+</main>
+
+<main id="all" class="hidden">
+  <div class="ov-top">
+    <button id="closeAll" class="linkbtn" style="margin-top:0">Back to upload</button>
+    <h1 style="margin:12px 0 4px">All buildings</h1>
+    <div class="filters" id="oGroup" aria-label="Filter by group">
+      <button class="chip" data-g="All" aria-pressed="true">All</button>
+      <button class="chip" data-g="Active" aria-pressed="false">Active</button>
+      <button class="chip" data-g="Semi-active" aria-pressed="false">Semi</button>
+      <button class="chip" data-g="Inactive" aria-pressed="false">Inactive</button>
+      <button class="chip" id="oNot" aria-pressed="false">Not shot only</button>
+    </div>
+    <div class="key">
+      <span><i class="k-done"></i>Shot</span><span><i class="k-overdue"></i>Overdue</span>
+      <span><i class="k-month"></i>Due this month</span><span><i></i>Later</span>
+    </div>
+  </div>
+  <div id="allBody"><p class="ov-empty">Loading…</p></div>
+</main>
+
+<main id="addScr" class="hidden">
+  <button id="closeAdd" class="linkbtn" style="margin-top:0">Back</button>
+  <h1 style="margin:12px 0 4px">Add a building</h1>
+  <p class="sum-note" style="margin-top:0">Search Pipedrive first. If the building is not there, use the name you typed. The admin is emailed about every addition.</p>
+  <label for="pdq">Building name</label>
+  <input id="pdq" type="text" placeholder="Type at least 2 letters, e.g. Allianz" autocomplete="off">
+  <div id="pdList" class="list" style="max-height:none"></div>
+  <div id="addForm" class="hidden">
+    <div class="board"><div class="bname" id="addName"></div><div class="meta" id="addSrc"></div></div>
+    <label for="addArea">Area</label><select id="addArea"></select>
+    <label for="addStreet">Street (optional)</label>
+    <input id="addStreet" type="text" placeholder="e.g. Jalan Stesen Sentral" autocomplete="off">
+    <label>How often should it be shot?</label>
+    <div class="freq">
+      <label><input type="radio" name="freq" value="6"> Every 6 months <small>counts as Active</small></label>
+      <label><input type="radio" name="freq" value="12"> Every 12 months <small>counts as Semi</small></label>
+      <label><input type="radio" name="freq" value="24"> Every 24 months <small>counts as Inactive</small></label>
+    </div>
+    <p id="addMsg" class="msg" role="status"></p>
+    <button id="addSave" class="btn">Add building</button>
+  </div>
+</main>
+
+<main id="usersScr" class="hidden">
+  <button id="closeUsers" class="linkbtn" style="margin-top:0">Back</button>
+  <h1 style="margin:12px 0 4px">Users</h1>
+  <p class="sum-note" style="margin-top:0">Only people listed here as Active can open the app. Changes apply within about a minute.</p>
+  <section class="shoot uform">
+    <b id="uFormTitle" style="font:600 1.05rem 'Barlow Condensed',sans-serif">Add a user</b>
+    <label for="uEmail">Gmail address</label><input id="uEmail" type="text" inputmode="email" autocomplete="off" placeholder="name@gmail.com">
+    <label for="uName">Name</label><input id="uName" type="text" autocomplete="off" placeholder="e.g. Eric">
+    <label for="uRole">Role</label>
+    <select id="uRole">
+      <option value="Uploader">Uploader: upload, view, save photos, add buildings</option>
+      <option value="Viewer">Viewer: view photos only</option>
+      <option value="Admin">Admin: everything, plus users and alerts</option>
+    </select>
+    <label class="chk"><input id="uActive" type="checkbox" checked> Active (can open the app)</label>
+    <p id="uMsg" class="msg" role="status"></p>
+    <button id="uSave" class="btn">Save user</button>
+    <button id="uClear" class="btn ghost">Clear form</button>
+  </section>
+  <div id="uList"><p class="ov-empty">Loading…</p></div>
+</main>
+
+<main id="photosScr" class="hidden">
+  <button id="closePhotos" class="linkbtn" style="margin-top:0">Back</button>
+  <h1 id="phTitle" style="margin:12px 0 4px">Photos</h1>
+  <p class="sum-note" style="margin-top:0">Tap a photo to view it. Use Save in the viewer to keep a copy.</p>
+  <div id="phBody"><p class="ov-empty">Loading…</p></div>
+</main>
+
+<div id="viewer" class="viewer hidden" role="dialog" aria-label="Photo viewer">
+  <div class="vtop"><span id="vName"></span><button id="vClose" aria-label="Close">✕</button></div>
+  <div class="vstage"><img id="vImg" alt=""><p id="vLoad">Loading…</p></div>
+  <div class="vbar">
+    <button id="vPrev" aria-label="Previous photo">‹</button>
+    <button id="vSave" class="up-only">Save to phone</button>
+    <button id="vNext" aria-label="Next photo">›</button>
+  </div>
+</div>
+
+<div id="bar" class="bar hidden up-only">
+  <div class="in">
+    <div class="prog" id="prog"><i></i></div>
+    <p id="msg" class="msg" role="status"></p>
+    <button id="go" class="btn" disabled>Upload photos</button>
+    <button id="next" class="btn ghost hidden">Next building</button>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const S = { pin:'', buildings:[], building:null, photos:[], busy:false, uploaded:[] };
+const MAX_EDGE = 3200, QUALITY = 0.85;
+
+const store = {
+  get(k){ try { return localStorage.getItem(k) || ''; } catch(e){ return ''; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+};
+
+const CONF = window.APP_CONFIG || {};
+store.del = k => { try { localStorage.removeItem(k); } catch(e){} };
+
+/** POST to the Apps Script API. Signs the user out on AUTH / NO_ACCESS. */
+async function api(action, args, extra){
+  const body = JSON.stringify(Object.assign({ action, session: store.get('dp_session'), args: args || {} }, extra || {}));
+  let res;
+  try {
+    res = await fetch(CONF.API_URL, { method:'POST', body, redirect:'follow', headers:{ 'Content-Type':'text/plain;charset=utf-8' } });
+  } catch(e){ throw new Error("Can't reach the server. Check your internet connection and try again."); }
+  if (!res.ok) throw new Error(`Server error (${res.status}). Please try again.`);
+  const j = await res.json();
+  if (j.ok) return j.data;
+  const err = new Error(j.error || 'Something went wrong.'); err.code = j.code;
+  if (j.code === 'AUTH' || j.code === 'NO_ACCESS') signedOut(j.error);
+  throw err;
+}
+
+/* Old function names used across this page → new API actions */
+const CALLS = {
+  getBuildings:    (area) => ['buildings', { area }],
+  getAllBuildings: () => ['allBuildings', {}],
+  getSummary:      () => ['summary', {}],
+  getPhotos:       (area, building) => ['photos', { area, building }],
+  getPhoto:        (area, building, fileId, thumb) => ['photo', { area, building, fileId, thumb }],
+  getShootZip:     (area, building, date) => ['shootZip', { area, building, date }],
+  uploadPhoto:     (p) => ['uploadPhoto', p],
+  finalizeBatch:   (p) => ['finalizeBatch', p],
+};
+function call(fn, _unused, ...args){ const [a, o] = CALLS[fn](...args); return api(a, o); }
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ── Sign in with Google ── */
+function gateMsg(t, cls){ $('#gateMsg').textContent = t || ''; $('#gateMsg').className = 'msg ' + (cls || ''); }
+
+function showGate(msg){
+  ['#app','#all','#photosScr','#addScr','#usersScr','#bar','#viewer'].forEach(id => $(id) && $(id).classList.add('hidden'));
+  $('#gate').classList.remove('hidden');
+  gateMsg(msg || '', msg ? 'err' : '');
+  initGsi();
+}
+
+let gsiReady = false;
+function initGsi(){
+  if (!CONF.CLIENT_ID){ gateMsg('Setup not finished: CLIENT_ID is missing in config.js.', 'err'); return; }
+  const go = () => {
+    if (!(window.google && google.accounts && google.accounts.id)) return setTimeout(go, 150);
+    if (!gsiReady){
+      google.accounts.id.initialize({
+        client_id: CONF.CLIENT_ID, callback: onCredential,
+        auto_select: true, cancel_on_tap_outside: false, itp_support: true, use_fedcm_for_prompt: true,
+      });
+      gsiReady = true;
+    }
+    $('#gsi').innerHTML = '';
+    google.accounts.id.renderButton($('#gsi'), { type:'standard', theme:'filled_black', size:'large', text:'signin_with', shape:'pill', width:280 });
+    google.accounts.id.prompt();
+  };
+  go();
+}
+
+async function onCredential(resp){
+  gateMsg('Signing you in…');
+  try {
+    const r = await api('login', null, { idToken: resp.credential });
+    store.set('dp_session', r.session);
+    await boot();
+  } catch(e){ gateMsg(e.message, 'err'); }
+}
+
+let signingOut = false;
+function signedOut(msg){
+  if (signingOut) return; signingOut = true;
+  store.del('dp_session');
+  showGate(msg);
+  setTimeout(() => { signingOut = false; }, 500);
+}
+
+$('#signOut').onclick = () => {
+  store.del('dp_session');
+  try { google.accounts.id.disableAutoSelect(); } catch(_){}
+  location.reload();
+};
+
+async function boot(){
+  const b = await api('bootstrap');
+  S.user = b.user;
+  document.body.dataset.role = b.user.role;
+  $('#meName').textContent = b.user.name;
+  $('#meRole').textContent = b.user.role;
+  $('#openUsers').classList.toggle('hidden', b.user.role !== 'Admin');
+  $('#who').value = b.user.name;
+  const opts = b.areas.map(a => `<option>${esc(a)}</option>`).join('');
+  $('#area').innerHTML = opts; $('#addArea').innerHTML = opts;
+  $('#date').value = b.today; $('#date').max = b.today;
+  renderSummary(b.summary);
+  const lastArea = store.get('dir_area'); if (b.areas.includes(lastArea)) $('#area').value = lastArea;
+  $('#gate').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#bar').classList.remove('hidden');
+  loadBuildings(); loadAllIndex();
+}
+
+/* Reload automatically when a new version is published */
+async function versionCheck(){
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache:'no-store' });
+    const v = (await r.json()).version;
+    if (v && CONF.VERSION && v !== CONF.VERSION){
+      const k = 'dp_reloaded_' + v;
+      if (!sessionStorage.getItem(k)){ sessionStorage.setItem(k, '1'); location.reload(); }
+    }
+  } catch(_){}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') versionCheck(); });
+
+/* ── Buildings ── */
+async function loadBuildings(){
+  S.building = null; renderBoard();
+  $('#list').innerHTML = '<div class="item">Loading…</div>';
+  store.set('dir_area', $('#area').value);
+  try {
+    S.buildings = await call('getBuildings', S.pin, $('#area').value);
+    syncIndex($('#area').value, S.buildings);
+    renderList();
+  } catch(e){ $('#list').innerHTML = `<div class="item" style="color:var(--late)">${esc(e.message)}</div>`; }
+}
+
+function stateLabel(b){
+  switch (b.state){
+    case 'done': return `Done ${b.done}`;
+    case 'overdue': return `Overdue, ${b.planned}`;
+    case 'month': return 'This month';
+    case 'upcoming': return b.planned;
+    default: return 'Not planned';
+  }
+}
+
+let SUM = null, SUM_VIEW = store.get('dir_view') || 'Active';
+
+function pick(r, view){
+  if (view !== 'All') return r[view];
+  return ['Active','Semi-active','Inactive'].reduce((t, k) =>
+    ({ total: t.total + r[k].total, done: t.done + r[k].done, overdue: t.overdue + r[k].overdue, addons: t.addons + (r[k].addons || 0) }),
+    { total:0, done:0, overdue:0, addons:0 });
+}
+
+function renderSummary(sum){
+  if (sum) SUM = sum;
+  if (!SUM) return;
+  const view = SUM_VIEW;
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-selected', b.dataset.s === view));
+
+  $('#sumDue').textContent = view === 'All'
+    ? 'All groups, current cycles'
+    : `Cycle to ${SUM.cycles[view].end}, counting shoots from ${SUM.countingFrom || SUM.cycles[view].start}`;
+
+  const t = pick(SUM.totals, view);
+  const pct = t.total ? Math.round(t.done / t.total * 100) : 0;
+  $('#kDone').textContent = t.done;
+  $('#kLeft').textContent = t.total - t.done;
+  $('#kTotal').textContent = t.total;
+  $('#kBar').style.width = pct + '%';
+
+  const row = (label, c, tag) => {
+    const p = c.total ? Math.round(c.done / c.total * 100) : 0;
+    const add = c.addons ? `<small class="addon-note">incl. ${c.addons} added</small>` : '';
+    return `<tr><td>${esc(label)}${add}</td><td class="done">${c.done}</td><td class="left">${c.total - c.done}</td><td>${c.total}</td>
+      <td class="pr"><div class="pb"><i style="width:${p}%"></i></div>
+      <small class="${c.overdue ? 'od' : ''}">${c.overdue ? c.overdue + ' overdue' : p + '%'}</small></td></tr>`;
+  };
+  $('#sumBody').innerHTML = SUM.areas.map(r => row(r.area, pick(r, view))).join('');
+  $('#sumFoot').innerHTML = row('Total', t);
+
+  const groups = view === 'All' ? ['Active','Semi-active','Inactive'] : [view];
+  const ppl = (SUM.people || [])
+    .map(p => ({ name: p.name, n: groups.reduce((a, g) => a + (p[g] || 0), 0),
+      areas: Object.entries(p.areas || {}).map(([a, c]) => [a, groups.reduce((x, g) => x + (c[g] || 0), 0)]).filter(([, n]) => n) }))
+    .filter(p => p.n).sort((a, b) => b.n - a.n);
+  $('#pplBody').innerHTML = ppl.length ? ppl.map(p => {
+    const share = t.done ? Math.round(p.n / t.done * 100) : 0;
+    const ofT = t.total ? Math.round(p.n / t.total * 100) : 0;
+    return `<tr><td class="nm">${esc(p.name)}<small style="text-align:left">${p.areas.map(([a, n]) => esc(a) + ' ' + n).join(', ')}</small></td>
+      <td class="done">${p.n}</td><td>${share}%</td>
+      <td class="ofbar"><div class="pb"><i style="width:${ofT}%"></i></div><small>${ofT}%</small></td></tr>`;
+  }).join('') : '<tr><td colspan="4" style="text-align:left;color:var(--muted)">No completed buildings yet in this group.</td></tr>';
+
+  $('#sumMonth').innerHTML = SUM.month.target
+    ? `${esc(SUM.monthLabel)} target: <b>${SUM.month.done} of ${SUM.month.target}</b> shot (all groups)`
+    : (SUM.started ? `${esc(SUM.monthLabel)}: no buildings planned this month` : `Monthly targets start ${esc(SUM.startLabel)}.`);
+}
+
+document.querySelector('.seg').onclick = e => {
+  const b = e.target.closest('button[data-s]'); if (!b) return;
+  SUM_VIEW = b.dataset.s; store.set('dir_view', SUM_VIEW); renderSummary();
+};
+
+$('#sumBody').onclick = e => {
+  const tr = e.target.closest('tr'); if (!tr) return;
+  const area = tr.firstElementChild.textContent;
+  F.group = SUM_VIEW; F.notShot = true; $('#q').value = '';
+  if ($('#area').value !== area){ $('#area').value = area; loadBuildings(); } else renderList();
+  $('#q').scrollIntoView({ behavior:'smooth', block:'start' });
+};
+
+/* ── All-buildings overview ── */
+const O = { group: 'All', notShot: false, data: null };
+
+async function openAll(){
+  $('#app').classList.add('hidden'); $('#bar').classList.add('hidden'); $('#all').classList.remove('hidden');
+  window.scrollTo(0,0);
+  $('#allBody').innerHTML = '<p class="ov-empty">Loading…</p>';
+  try { O.data = await call('getAllBuildings', S.pin); renderAll(); }
+  catch(e){ $('#allBody').innerHTML = `<p class="ov-empty" style="color:var(--late)">${esc(e.message)}</p>`; }
+}
+
+function closeAll(){
+  $('#all').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#bar').classList.remove('hidden');
+}
+
+function renderAll(){
+  if (!O.data) return;
+  setChips('#oGroup', O); $('#oNot').setAttribute('aria-pressed', O.notShot);
+  const groups = O.group === 'All' ? ['Active','Semi-active','Inactive'] : [O.group];
+  $('#allBody').innerHTML = O.data.map(({ area, buildings }) => {
+    const inScope = buildings.filter(b => groups.includes(b.status));
+    const done = inScope.filter(b => b.state === 'done').length;
+    const body = groups.map(g => {
+      const all = buildings.filter(b => b.status === g);
+      if (!all.length) return '';
+      const gDone = all.filter(b => b.state === 'done').length;
+      const shown = all.filter(b => passes(b, O, ''));
+      return `<div class="ov-grp"><h3>${GRP[g]}: <b>${gDone} shot, ${all.length - gDone} left</b> of ${all.length}</h3>
+        <div class="ov-list">${shown.length ? shown.map(b => `
+          <button class="ov-b st-${b.state}" data-a="${esc(area)}" data-n="${esc(b.name)}">
+            <span>${esc(b.label || b.name)}</span><span class="tag d-${b.state}">${esc(stateLabel(b))}</span>
+          </button>`).join('') : '<p class="ov-empty">All shot.</p>'}</div></div>`;
+    }).join('');
+    return `<details class="ov-area" open><summary>${esc(area)}<small>${done} shot, ${inScope.length - done} left of ${inScope.length}</small></summary>${body}</details>`;
+  }).join('');
+}
+
+$('#openAll').onclick = openAll;
+$('#closeAll').onclick = closeAll;
+$('#oGroup').onclick = e => {
+  const c = e.target.closest('.chip'); if (!c) return;
+  if (c.id === 'oNot') O.notShot = !O.notShot; else O.group = c.dataset.g;
+  renderAll();
+};
+$('#allBody').onclick = async e => {
+  const b = e.target.closest('.ov-b'); if (!b) return;
+  closeAll();
+  F.group = 'All'; F.notShot = false; $('#q').value = b.dataset.n;
+  if ($('#area').value !== b.dataset.a){ $('#area').value = b.dataset.a; await loadBuildings(); $('#q').value = b.dataset.n; }
+  S.building = S.buildings.find(x => x.name === b.dataset.n) || null;
+  renderList(); renderBoard();
+  $('#q').scrollIntoView({ behavior:'smooth', block:'start' });
+};
+
+/* ── Building photos: download only, no Drive links ── */
+const P = { area:'', building:'' };
+
+function b64ToBlob(b64, mime){
+  const bin = atob(b64), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+function saveBlob(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 120000);
+  return url;
+}
+
+function fmtShoot(d){ // 2026.10.23 -> 23 Oct 2026
+  const [y,m,dd] = d.split('.').map(Number);
+  return new Date(y, m-1, dd).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+
+async function openPhotos(area, building, label){
+  P.area = area; P.building = building;
+  ['#app','#all','#bar'].forEach(id => $(id).classList.add('hidden'));
+  $('#photosScr').classList.remove('hidden'); window.scrollTo(0,0);
+  $('#phTitle').textContent = label || building;
+  $('#phBody').innerHTML = '<p class="ov-empty">Loading…</p>';
+  try {
+    const shoots = await call('getPhotos', S.pin, area, building);
+    if (!shoots.length){ $('#phBody').innerHTML = '<p class="ov-empty">No photos uploaded for this building yet.</p>'; return; }
+    $('#phBody').innerHTML = shoots.map((sh, si) => `
+      <section class="shoot">
+        <div class="shoot-h"><span><b>${esc(fmtShoot(sh.date))}</b><br><small>${sh.files.length} photo${sh.files.length>1?'s':''}</small></span>
+          ${sh.files.length > 1 ? `<button class="zipbtn up-only" data-zip="${esc(sh.date)}">Download all (.zip)</button>` : ''}</div>
+        <div class="pgrid">${sh.files.map(f => `
+          <div class="ptile">
+            <div class="ph" data-thumb="${esc(f.id)}" data-view="${esc(f.id)}">Loading…</div>
+            <div class="pn">${esc(f.name)}</div>
+            <button data-view="${esc(f.id)}">View</button>
+          </div>`).join('')}</div>
+      </section>`).join('');
+    loadThumbs();
+  } catch(e){ $('#phBody').innerHTML = `<p class="ov-empty" style="color:var(--late)">${esc(e.message)}</p>`; }
+}
+
+async function loadThumbs(){
+  for (const el of document.querySelectorAll('#phBody [data-thumb]')){
+    if ($('#photosScr').classList.contains('hidden')) return;
+    try {
+      const r = await call('getPhoto', S.pin, P.area, P.building, el.dataset.thumb, true);
+      el.innerHTML = `<img alt="" src="${URL.createObjectURL(b64ToBlob(r.b64, r.mime))}">`;
+    } catch(_){ el.textContent = 'Preview unavailable'; }
+  }
+}
+
+function closePhotos(){
+  if (typeof closeViewer === 'function') closeViewer();
+  $('#photosScr').classList.add('hidden');
+  $('#app').classList.remove('hidden'); $('#bar').classList.remove('hidden');
+}
+
+const V = { ids: [], i: 0, cache: {}, cur: null };
+
+async function fetchFull(id){
+  if (!V.cache[id]){
+    const r = await call('getPhoto', S.pin, P.area, P.building, id, false);
+    V.cache[id] = { name: r.name, blob: b64ToBlob(r.b64, r.mime) };
+    V.cache[id].url = URL.createObjectURL(V.cache[id].blob);
+  }
+  return V.cache[id];
+}
+
+async function showPhoto(i){
+  V.i = i; const id = V.ids[i];
+  $('#vPrev').disabled = i === 0; $('#vNext').disabled = i === V.ids.length - 1;
+  $('#vImg').removeAttribute('src'); $('#vLoad').textContent = 'Loading…'; $('#vName').textContent = `${i+1} of ${V.ids.length}`;
+  try {
+    const f = await fetchFull(id);
+    if (V.ids[V.i] !== id) return;            // user moved on
+    V.cur = f; $('#vImg').src = f.url; $('#vLoad').textContent = ''; $('#vName').textContent = `${i+1} of ${V.ids.length} · ${f.name}`;
+    if (V.ids[i+1]) fetchFull(V.ids[i+1]).catch(() => {});   // preload next, like a chat app
+  } catch(e){ $('#vLoad').textContent = e.message; }
+}
+
+function openViewer(id){
+  const tiles = [...document.querySelectorAll('#phBody button[data-view]')];
+  const shoot = tiles.find(t => t.dataset.view === id).closest('.shoot');
+  V.ids = [...shoot.querySelectorAll('button[data-view]')].map(t => t.dataset.view);
+  $('#viewer').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  showPhoto(V.ids.indexOf(id));
+}
+
+function closeViewer(){ $('#viewer').classList.add('hidden'); document.body.style.overflow = ''; }
+
+async function sharePhoto(f){
+  const file = new File([f.blob], f.name, { type: f.blob.type || 'image/jpeg' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })){
+    try { await navigator.share({ files: [file] }); return; } catch(e){ if (e.name === 'AbortError') return; }
+  }
+  saveBlob(f.blob, f.name);
+}
+
+$('#phBody').onclick = async e => {
+  const v = e.target.closest('[data-view]');
+  if (v){ openViewer(v.dataset.view); return; }
+  const zip = e.target.closest('button[data-zip]'); if (!zip || zip.disabled) return;
+  const label = zip.textContent; zip.disabled = true; zip.textContent = 'Preparing…';
+  try { const r = await call('getShootZip', S.pin, P.area, P.building, zip.dataset.zip); saveBlob(b64ToBlob(r.b64, r.mime), r.name); zip.textContent = 'Downloaded'; }
+  catch(err){ zip.textContent = 'Failed, tap to retry'; alert(err.message); }
+  finally { zip.disabled = false; setTimeout(() => { zip.textContent = label; }, 2500); }
+};
+
+$('#vClose').onclick = closeViewer;
+$('#vPrev').onclick = () => V.i > 0 && showPhoto(V.i - 1);
+$('#vNext').onclick = () => V.i < V.ids.length - 1 && showPhoto(V.i + 1);
+$('#vSave').onclick = () => { if (!V.cur) return; sharePhoto(V.cur); api('logSave', { area:P.area, building:P.building, name:V.cur.name }).catch(() => {}); };
+document.addEventListener('keydown', e => {
+  if ($('#viewer').classList.contains('hidden')) return;
+  if (e.key === 'Escape') closeViewer(); else if (e.key === 'ArrowLeft') $('#vPrev').click(); else if (e.key === 'ArrowRight') $('#vNext').click();
+});
+(() => { // swipe left/right
+  let x0 = null;
+  $('#viewer').addEventListener('touchstart', e => { if (e.touches.length === 1) x0 = e.touches[0].clientX; }, { passive: true });
+  $('#viewer').addEventListener('touchend', e => {
+    if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 60) (dx < 0 ? $('#vNext') : $('#vPrev')).click();
+  }, { passive: true });
+})();
+
+$('#closePhotos').onclick = closePhotos;
+$('#viewPhotos').onclick = () => S.building && openPhotos($('#area').value, S.building.name, S.building.label);
+
+async function refreshSummary(){
+  try { renderSummary(await call('getSummary', S.pin)); } catch(_){}
+}
+
+const F = { group: 'All', notShot: false };
+const GRP = { 'Active':'Active', 'Semi-active':'Semi', 'Inactive':'Inactive' };
+
+function passes(b, f, q){
+  if (f.group !== 'All' && b.status !== f.group) return false;
+  if (f.notShot && b.state === 'done') return false;
+  return !q || b.name.toLowerCase().includes(q) || (b.label||'').toLowerCase().includes(q) || (b.street||'').toLowerCase().includes(q);
+}
+
+function setChips(sel, f){
+  document.querySelectorAll(sel + ' .chip[data-g]').forEach(c => c.setAttribute('aria-pressed', c.dataset.g === f.group));
+}
+
+/* All-areas index so typing finds a building in any area */
+S.all = null;   // { area: [buildings] }
+async function loadAllIndex(){
+  try {
+    const data = await call('getAllBuildings', S.pin);
+    S.all = {}; data.forEach(d => { S.all[d.area] = d.buildings; });
+    if ($('#q').value.trim()) renderList();
+  } catch(_){ /* search falls back to the current area */ }
+}
+function syncIndex(area, list){ if (S.all) S.all[area] = list; }
+
+function itemHtml(b, area, showArea){
+  const sel = S.building && S.building.name === b.name && $('#area').value === area;
+  return `
+    <button class="item st-${b.state}" role="option" aria-selected="${sel}" data-n="${esc(b.name)}" data-a="${esc(area)}">
+      <span class="n"><b>${showArea ? `<span class="abadge">${esc(area)}</span>` : ''}${esc(b.label || b.name)}${b.addon ? '<span class="addon-tag">ADDED</span>' : ''}</b><small><span class="grp">${GRP[b.status]}</span>${b.street ? ', ' + esc(b.street) : ''}${b.last ? ', last ' + esc(b.last) : ''}</small></span>
+      <span class="tag d-${b.state}">${esc(stateLabel(b))}</span>
+    </button>`;
+}
+
+function renderList(){
+  const q = $('#q').value.trim().toLowerCase();
+  const cur = $('#area').value;
+  setChips('#fGroup', F); $('#fNot').setAttribute('aria-pressed', F.notShot);
+
+  if (q && S.all){
+    // Search every area; current area first, then the rest
+    const areas = [cur, ...Object.keys(S.all).filter(a => a !== cur)];
+    const hits = [];
+    areas.forEach(a => (a === cur ? S.buildings : (S.all[a] || [])).forEach(b => { if (passes(b, F, q)) hits.push([a, b]); }));
+    $('#list').innerHTML = hits.length
+      ? hits.slice(0, 60).map(([a, b]) => itemHtml(b, a, true)).join('')
+      : '<div class="item">No building matches in any area. Check the spelling, or change the filter.</div>';
+    return;
+  }
+
+  if (!S.buildings.length){ $('#list').innerHTML = '<div class="item" style="color:var(--late)">No buildings loaded for this area. Check the tab headers.</div>'; return; }
+  const rows = S.buildings.filter(b => passes(b, F, q));
+  if (!rows.length){ $('#list').innerHTML = `<div class="item">Nothing matches in ${esc(cur)}. Change the filter or spelling.</div>`; return; }
+  $('#list').innerHTML = rows.map(b => itemHtml(b, cur, false)).join('');
+}
+
+/** Select a building in any area; switches the Area dropdown when needed. */
+async function selectBuilding(area, name){
+  if ($('#area').value !== area){
+    $('#area').value = area; store.set('dir_area', area);
+    S.buildings = (S.all && S.all[area]) || [];
+    if (!S.buildings.length){ await loadBuildings(); }
+    else call('getBuildings', S.pin, area).then(list => {   // refresh quietly in the background
+      if ($('#area').value !== area) return;
+      const keep = S.building && S.building.name;
+      S.buildings = list; syncIndex(area, list);
+      S.building = list.find(b => b.name === keep) || S.building;
+      renderList(); renderBoard();
+    }).catch(() => {});
+  }
+  S.building = S.buildings.find(b => b.name === name) || null;
+  renderList(); renderBoard();
+}
+
+$('#fGroup').onclick = e => {
+  const c = e.target.closest('.chip'); if (!c) return;
+  if (c.id === 'fNot') F.notShot = !F.notShot; else F.group = c.dataset.g;
+  renderList();
+};
+
+$('#list').onclick = e => {
+  const el = e.target.closest('.item[data-n]'); if (!el || S.busy) return;
+  selectBuilding(el.dataset.a || $('#area').value, el.dataset.n);
+};
+$('#q').oninput = renderList;
+$('#area').onchange = () => { $('#q').value = ''; loadBuildings(); };
+$('#date').onchange = renderBoard;
+
+/* ── Preview board ── */
+function baseName(){
+  if (!S.building || !$('#date').value) return '';
+  const name = (S.building.label || S.building.name).replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim();
+  return `${name} (${$('#date').value.replace(/-/g,'.')})`;
+}
+
+function renderBoard(){
+  const bd = $('#board'), base = baseName();
+  bd.classList.toggle('empty', !base);
+  bd.querySelector('.bname').textContent = base || 'Choose a building';
+  bd.querySelector('.meta').textContent = S.building ? `${$('#area').value} · ${S.building.status}` : '';
+  const n = S.photos.length;
+  bd.querySelector('.files').textContent = base && n
+    ? (n === 1 ? `${base} - 1.jpg` : `${base} - 1.jpg … ${base} - ${n}.jpg`) : '';
+  $('#viewPhotos').classList.toggle('hidden', !(S.building && S.building.last));
+  renderThumbs(); updateButton();
+}
+
+/* ── Photos ── */
+$('#files').onchange = e => {
+  for (const f of e.target.files) S.photos.push({ file:f, url:URL.createObjectURL(f), state:'' });
+  e.target.value = '';
+  setMsg(''); renderBoard();
+};
+
+function renderThumbs(){
+  $('#thumbs').innerHTML = S.photos.map((p,i) => `
+    <div class="th ${p.state}">
+      <img src="${p.url}" alt="Photo ${i+1}">
+      <span class="seq">${i+1}</span>
+      ${S.busy || p.state==='ok' ? '' : `<button class="x" data-i="${i}" aria-label="Remove photo ${i+1}">×</button>`}
+    </div>`).join('');
+}
+$('#thumbs').onclick = e => {
+  const b = e.target.closest('.x'); if (!b) return;
+  const i = +b.dataset.i; URL.revokeObjectURL(S.photos[i].url); S.photos.splice(i,1); renderBoard();
+};
+
+function updateButton(){
+  const who = $('#who').value;
+  const pending = S.photos.filter(p => p.state !== 'ok').length;
+
+  // Photos can only be added once a building and "Taken by" are chosen
+  const canPick = !!(S.building && who) && !S.busy;
+  $('#files').disabled = !canPick;
+  $('#pick').classList.toggle('off', !canPick);
+  $('#pickTxt').textContent = !S.building ? 'Choose a building first'
+    : !who ? 'Select your name in "Taken by" first' : 'Add photos';
+
+  const ready = S.building && who && $('#date').value && pending && !S.busy;
+  $('#go').disabled = !ready;
+  $('#go').textContent = S.busy ? 'Uploading…'
+    : (pending && !who) ? 'Select your name first'
+    : pending ? `Upload ${pending} photo${pending>1?'s':''}` : 'Upload photos';
+  if (!S.busy && S.photos.length && !pending) $('#go').textContent = 'Uploaded';
+}
+
+// Tapping the locked picker points them to what's missing
+$('#pick').addEventListener('click', e => {
+  if (!$('#files').disabled) return;
+  e.preventDefault();
+  const target = !S.building ? $('#q') : $('#who');
+  target.scrollIntoView({ behavior:'smooth', block:'center' });
+  target.focus();
+  if (target === $('#who')){ $('#who').classList.add('need'); setTimeout(() => $('#who').classList.remove('need'), 2500); }
+});
+
+async function toJpegB64(file){
+  let src;
+  try { src = await createImageBitmap(file, { imageOrientation:'from-image' }); }
+  catch(_) {
+    src = await new Promise((res, rej) => { const im = new Image();
+      im.onload = () => res(im); im.onerror = () => rej(new Error(`Can't read ${file.name}. Use JPG or PNG.`));
+      im.src = URL.createObjectURL(file); });
+  }
+  const w = src.width, h = src.height, k = Math.min(1, MAX_EDGE / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.round(w*k); c.height = Math.round(h*k);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', QUALITY));
+  const url = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+  return url.split(',')[1];
+}
+
+/* ── Upload ── */
+$('#go').onclick = async () => {
+  if (S.busy) return;
+  S.busy = true; S.uploaded = []; setMsg('');
+  const area = $('#area').value, building = S.building.name, shootDate = $('#date').value, uploader = $('#who').value;
+  const todo = S.photos.filter(p => p.state !== 'ok');
+  let done = 0, folderUrl = '';
+  progress(0, todo.length); renderBoard();
+
+  for (const p of todo){
+    p.state = 'busy'; renderThumbs();
+    let attempt = 0;
+    while (true){
+      try {
+        const b64 = await toJpegB64(p.file);
+        const r = await call('uploadPhoto', S.pin, { area, building, shootDate, b64, uploader });
+        p.state = 'ok'; p.name = r.name; folderUrl = r.folderUrl; S.uploaded.push(r.name);
+        break;
+      } catch(e){
+        if (++attempt >= 3 || /PIN|not in the|Invalid|future|Only JPEG|Taken by/.test(e.message)){ p.state = 'err'; p.error = e.message; break; }
+        await new Promise(r => setTimeout(r, 1200 * attempt));
+      }
+    }
+    progress(++done, todo.length); renderThumbs();
+  }
+
+  if (S.uploaded.length){
+    try { await call('finalizeBatch', S.pin, { area, building, shootDate, uploader, files:S.uploaded, folderUrl }); }
+    catch(e){ setMsg(`Photos saved, but the log entry failed: ${e.message}`, 'err'); }
+  }
+
+  S.busy = false; $('#prog').style.display = 'none';
+  const failed = S.photos.filter(p => p.state === 'err');
+  if (failed.length){
+    setMsg(`${failed.length} photo${failed.length>1?'s':''} failed: ${failed[0].error}. Tap upload to retry.`, 'err');
+    failed.forEach(p => p.state = '');
+  } else {
+    setMsg(`Saved ${S.uploaded.length} photo${S.uploaded.length>1?'s':''}.`, 'ok', true);
+    $('#next').classList.remove('hidden');
+    const b = S.buildings.find(x => x.name === building);
+    if (b){ b.state = 'done'; b.done = 'today'; b.last = 'today'; }
+    syncIndex(area, S.buildings);
+    refreshSummary();
+  }
+  renderBoard();
+};
+
+$('#next').onclick = () => {
+  S.photos.forEach(p => URL.revokeObjectURL(p.url));
+  S.photos = []; S.building = null; $('#q').value = '';
+  $('#next').classList.add('hidden'); setMsg('');
+  renderList(); renderBoard(); window.scrollTo(0,0); $('#q').focus();
+};
+
+function progress(n, total){
+  $('#prog').style.display = 'block';
+  $('#prog i').style.width = (total ? n/total*100 : 0) + '%';
+  setMsg(`Uploading ${Math.min(n+1,total)} of ${total}…`);
+}
+function setMsg(t, cls, html){ const m = $('#msg'); m.className = 'msg ' + (cls||''); html ? m.innerHTML = t : m.textContent = t; }
+
+window.addEventListener('beforeunload', e => { if (S.busy){ e.preventDefault(); e.returnValue = ''; } });
+
+/* auto-unlock with remembered PIN */
+/* ══ Add a building (Pipedrive search or typed name) ══ */
+const A = { pick: null, timer: null, seq: 0 };
+
+function openAdd(){
+  ['#app','#bar'].forEach(id => $(id).classList.add('hidden'));
+  $('#addScr').classList.remove('hidden'); window.scrollTo(0,0);
+  $('#pdq').value = $('#q').value.trim(); A.pick = null;
+  $('#addForm').classList.add('hidden'); $('#addMsg').textContent = '';
+  document.querySelectorAll('input[name=freq]').forEach(r => { r.checked = false; });
+  $('#addStreet').value = ''; $('#addArea').value = $('#area').value;
+  searchPd(); $('#pdq').focus();
+}
+function closeAdd(){ $('#addScr').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#bar').classList.remove('hidden'); }
+
+async function searchPd(){
+  const term = $('#pdq').value.trim(), my = ++A.seq;
+  if (term.length < 2){ $('#pdList').innerHTML = ''; return; }
+  $('#pdList').innerHTML = '<div class="item">Searching Pipedrive…</div>';
+  let items = [], note = '';
+  try { items = await api('searchProducts', { term }); }
+  catch(e){ note = e.message; }
+  if (my !== A.seq) return;
+  A.items = items;
+  $('#pdList').innerHTML = items.map((p, i) => `
+    <button class="item pd-item" data-i="${i}">
+      <span class="n"><b>${esc(p.label)}</b><small>${p.existing ? `Already in ${esc(p.existing.area)}, tap to open it` : 'In Pipedrive'}</small></span>
+      <span class="tag ${p.existing ? 'd-done' : 'd-upcoming'}">${p.existing ? 'Open' : 'Choose'}</span>
+    </button>`).join('') + `
+    <button class="item pd-item" data-manual="1">
+      <span class="n"><b>Use “${esc(term)}”</b><small>Not in Pipedrive. The admin will be told.</small></span>
+      <span class="tag d-month">Use name</span>
+    </button>` + (note ? `<div class="item" style="color:var(--muted)">${esc(note)}</div>` : '');
+}
+$('#pdq').oninput = () => { clearTimeout(A.timer); A.timer = setTimeout(searchPd, 350); $('#addForm').classList.add('hidden'); };
+
+$('#pdList').onclick = e => {
+  const el = e.target.closest('.pd-item'); if (!el) return;
+  if (el.dataset.manual){
+    A.pick = { name: $('#pdq').value.trim(), inPipedrive: false };
+  } else {
+    const p = A.items[+el.dataset.i];
+    if (p.existing){ closeAdd(); selectBuilding(p.existing.area, p.existing.name); $('#q').value = ''; return; }
+    A.pick = { name: p.name, label: p.label, id: p.id, inPipedrive: true };
+  }
+  $('#addName').textContent = A.pick.label || A.pick.name;
+  $('#addSrc').textContent = A.pick.inPipedrive ? 'From Pipedrive' : 'Not in Pipedrive (admin will be told)';
+  $('#addForm').classList.remove('hidden');
+  $('#addForm').scrollIntoView({ behavior:'smooth', block:'start' });
+};
+
+$('#addSave').onclick = async () => {
+  const freq = (document.querySelector('input[name=freq]:checked') || {}).value;
+  if (!A.pick || !A.pick.name){ $('#addMsg').textContent = 'Choose a building first.'; $('#addMsg').className = 'msg err'; return; }
+  if (!freq){ $('#addMsg').textContent = 'Choose how often it should be shot.'; $('#addMsg').className = 'msg err'; return; }
+  $('#addSave').disabled = true; $('#addMsg').textContent = 'Adding…'; $('#addMsg').className = 'msg';
+  try {
+    const r = await api('addBuilding', { area: $('#addArea').value, name: A.pick.name, street: $('#addStreet').value,
+      freq: +freq, pipedriveId: A.pick.id || '', inPipedrive: A.pick.inPipedrive });
+    closeAdd(); $('#q').value = '';
+    $('#area').value = r.area; await loadBuildings(); loadAllIndex(); refreshSummary();
+    selectBuilding(r.area, r.building ? r.building.name : A.pick.name);
+    setMsg('Building added and counted in the dashboard. The admin has been emailed.', 'ok');
+  } catch(e){ $('#addMsg').textContent = e.message; $('#addMsg').className = 'msg err'; }
+  finally { $('#addSave').disabled = false; }
+};
+$('#openAdd').onclick = openAdd;
+$('#closeAdd').onclick = closeAdd;
+
+/* ══ Users (Admin only) ══ */
+async function openUsers(){
+  ['#app','#bar'].forEach(id => $(id).classList.add('hidden'));
+  $('#usersScr').classList.remove('hidden'); window.scrollTo(0,0);
+  clearUserForm();
+  try { renderUsers(await api('listUsers')); }
+  catch(e){ $('#uList').innerHTML = `<p class="ov-empty" style="color:var(--late)">${esc(e.message)}</p>`; }
+}
+function closeUsers(){ $('#usersScr').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#bar').classList.remove('hidden'); }
+
+function renderUsers(list){
+  S.users = list;
+  const order = { Admin:0, Uploader:1, Viewer:2 };
+  list.sort((a, b) => (b.active - a.active) || order[a.role] - order[b.role] || a.name.localeCompare(b.name));
+  $('#uList').innerHTML = `<h2 class="sum-sub">${list.filter(u => u.active).length} active, ${list.filter(u => !u.active).length} inactive</h2>` +
+    list.map((u, i) => `
+    <button class="urow ${u.active ? '' : 'off'}" data-i="${i}">
+      <span><b>${esc(u.name)}</b>${u.me ? ' (you)' : ''}<small>${esc(u.email)}</small>
+        <small>${u.lastSeen ? 'Last signed in ' + esc(u.lastSeen) : 'Never signed in'}</small></span>
+      <span class="tag ${u.active ? 'd-done' : 'd-overdue'}">${u.active ? esc(u.role) : 'Inactive'}</span>
+    </button>`).join('');
+}
+
+function clearUserForm(){
+  $('#uFormTitle').textContent = 'Add a user';
+  $('#uEmail').value = ''; $('#uEmail').disabled = false; $('#uName').value = '';
+  $('#uRole').value = 'Uploader'; $('#uActive').checked = true; $('#uMsg').textContent = '';
+}
+
+$('#uList').onclick = e => {
+  const el = e.target.closest('.urow'); if (!el) return;
+  const u = S.users[+el.dataset.i];
+  $('#uFormTitle').textContent = 'Edit ' + u.name;
+  $('#uEmail').value = u.email; $('#uEmail').disabled = true; $('#uName').value = u.name;
+  $('#uRole').value = u.role; $('#uActive').checked = u.active; $('#uMsg').textContent = '';
+  window.scrollTo({ top: 0, behavior:'smooth' });
+};
+
+$('#uSave').onclick = async () => {
+  $('#uSave').disabled = true; $('#uMsg').textContent = 'Saving…'; $('#uMsg').className = 'msg';
+  try {
+    const list = await api('saveUser', { email: $('#uEmail').value, name: $('#uName').value, role: $('#uRole').value, active: $('#uActive').checked });
+    renderUsers(list); clearUserForm();
+    $('#uMsg').textContent = 'Saved.'; $('#uMsg').className = 'msg ok';
+  } catch(e){ $('#uMsg').textContent = e.message; $('#uMsg').className = 'msg err'; }
+  finally { $('#uSave').disabled = false; }
+};
+$('#uClear').onclick = clearUserForm;
+$('#openUsers').onclick = openUsers;
+$('#closeUsers').onclick = closeUsers;
+
+/* ══ Start ══ */
+(async function start(){
+  versionCheck();
+  if (!CONF.API_URL || /PASTE/.test(CONF.API_URL)){ showGate('Setup not finished: API_URL is missing in config.js.'); return; }
+  if (store.get('dp_session')){
+    gateMsg('Opening…');
+    try { await boot(); return; }
+    catch(e){ if (e.code) return; showGate(e.message); return; }
+  }
+  showGate();
+})();
+</script>
+</body>
+</html>
