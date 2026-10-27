@@ -210,6 +210,62 @@
   .urow.off{opacity:.55}
   .urow small{display:block;color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}
   .addon-note{display:block;font-size:.7rem;color:var(--soon);font-weight:600}
+  /* Tenant reading status + review */
+  .tstat{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+    background:var(--stone);border-radius:8px;padding:10px 12px;margin:-2px 0 12px;font-size:.88rem}
+  .tstat b{font-weight:600}
+  .tstat .pill{font-size:.75rem;font-weight:600;border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .pill.ready{background:#e6efe9;color:var(--act)} .pill.wait{background:#fdf3e1;color:var(--soon)} .pill.none{background:#e3e7e3;color:var(--muted)}
+  .tstat .tbtns{display:flex;gap:8px;flex-wrap:wrap;width:100%}
+  .tstat .tbtns button{flex:1;min-height:40px;font:600 .85rem Barlow,sans-serif;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer}
+  .tsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+  .tsum div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px}
+  .tsum b{display:block;font:600 1.5rem/1 "Barlow Condensed",sans-serif}
+  .tsum span{font-size:.75rem;color:var(--muted)}
+  .tsum .k-new b{color:var(--act)} .tsum .k-in b{color:var(--soon)} .tsum .k-out b{color:var(--late)}
+  .trow{background:#fff;border:1px solid var(--line);border-left:5px solid #c4cbc6;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:.9rem}
+  .trow .r{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:none}
+  .trow b{display:block;font-weight:600;margin:2px 0}
+  .trow small{display:block;color:var(--muted);overflow-wrap:anywhere}
+  .trow a{color:var(--act);font-weight:600}
+  .trow.t-out{border-left-color:var(--late)} .trow.t-in{border-left-color:var(--soon)} .trow.t-new{border-left-color:var(--act)}
+  .trow.t-chk,.trow.t-pos{border-left-color:#8a6fb0}
+  .cats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:0 0 12px}
+  .cats div{display:flex;flex-direction:column;font-size:.78rem;color:var(--muted);background:var(--stone);border-radius:6px;padding:6px 10px;border-left:4px solid #c4cbc6}
+  .cats b{font:600 1.05rem/1.2 "Barlow Condensed",Barlow,sans-serif;color:var(--ink)}
+  .cats .c-done{border-left-color:var(--act)} .cats .c-month{border-left-color:var(--soon)} .cats .c-over{border-left-color:var(--late)}
+  .export{border-top:1px solid var(--line);padding-top:10px;margin:4px 0 12px}
+  .export label{margin:0 0 6px;font-size:.85rem}
+  .exp-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .exp-row .btn{width:auto;padding:0 14px;min-height:48px;font-size:.95rem}
+  /* Area cards with category % */
+  .acard{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px;cursor:pointer}
+  .acard.total{border:2px solid var(--ink);cursor:default}
+  .ac-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .ac-h b{font:600 1.1rem "Barlow Condensed",sans-serif}
+  .ac-h span{font-size:.78rem;color:var(--muted)}
+  .stack{display:flex;height:10px;border-radius:5px;overflow:hidden;background:#e3e7e3;margin:8px 0 6px}
+  .stack i{display:block;height:100%}
+  .s-done{background:var(--act)} .s-month{background:var(--soon)} .s-over{background:var(--late)} .s-ref{background:#8a6fb0} .s-plan{background:#c4cbc6}
+  .ac-p{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.78rem;color:var(--muted)}
+  .ac-p span{display:inline-flex;align-items:center;gap:5px}
+  .ac-p i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .ac-p b{color:var(--ink);font-weight:600}
+  .ac-n{display:block;font-size:.75rem;color:var(--muted);margin-top:4px}
+  .cats .c-ref{border-left-color:#8a6fb0} .cats .c-nodir{border-left-color:#3f7d6e}
+  .s-nodir{background:#3f7d6e}
+  /* Visit without photos */
+  .visit{border:1px dashed #9fb0a6;border-radius:var(--r);padding:10px 12px;margin-top:12px;background:#fff}
+  .visit summary{cursor:pointer;font-weight:600;list-style:none}
+  .visit summary::-webkit-details-marker{display:none}
+  .visit summary::after{content:" ▾";color:var(--muted)}
+  .visit[open] summary::after{content:" ▴"}
+  .visit .btn{margin-top:10px}
+  .item.st-refused{border-left-color:#8a6fb0}
+  .item.st-nodir{border-left-color:#3f7d6e;background:#eef4f2}
+  .ov-b.st-refused{border-left-color:#8a6fb0} .ov-b.st-nodir{border-left-color:#3f7d6e;background:#eef4f2}
+  .d-refused{background:#efe9f6;color:#6a4f93} .d-nodir{background:#e2eeea;color:#3f7d6e}
+  .key .k-ref{background:#8a6fb0} .key .k-nodir{background:#3f7d6e}
   .hidden{display:none!important}
   .lock{max-width:360px;margin:12vh auto 0}
   @media (prefers-reduced-motion:reduce){.prog i{transition:none}}
@@ -245,11 +301,25 @@
       <div><b id="kTotal">–</b><span>Total</span></div>
     </div>
     <div class="pbig"><i id="kBar"></i></div>
-    <table>
-      <thead><tr><th>Area</th><th>Done</th><th>Left</th><th>Total</th><th>Progress</th></tr></thead>
-      <tbody id="sumBody"><tr><td colspan="5">Loading…</td></tr></tbody>
-      <tfoot id="sumFoot"></tfoot>
-    </table>
+    <div id="kCats" class="cats"></div>
+    <div class="export up-only">
+      <label for="expList">Download a list of these buildings</label>
+      <div class="exp-row">
+        <select id="expList">
+          <option value="all">All buildings</option>
+          <option value="overdue">Overdue</option>
+          <option value="target">Target this month</option>
+          <option value="notshot">Not yet shot</option>
+          <option value="completed">Completed</option>
+          <option value="refused">Visited, not allowed</option>
+          <option value="nodir">No tenant directory</option>
+        </select>
+        <button id="expBtn" class="btn">Download (.xlsx)</button>
+      </div>
+      <p id="expMsg" class="sum-note"></p>
+    </div>
+    <h2 class="sum-sub">By area</h2>
+    <div id="areaCards"><p class="ov-empty">Loading…</p></div>
     <p id="sumMonth" class="sum-m"></p>
     <h2 class="sum-sub">By marketer</h2>
     <table class="ppl">
@@ -276,7 +346,7 @@
   </div>
   <div class="key">
     <span><i class="k-done"></i>Shot</span><span><i class="k-overdue"></i>Overdue</span>
-    <span><i class="k-month"></i>Due this month</span><span><i></i>Later</span>
+    <span><i class="k-month"></i>Due this month</span><span><i class="k-ref"></i>Not allowed</span><span><i></i>Later</span><span><i class="k-nodir"></i>No directory</span>
   </div>
   <div id="list" class="list" role="listbox" aria-label="Buildings"></div>
   <button id="openAdd" class="linkbtn up-only">+ Add a building that is not in the list</button>
@@ -292,6 +362,21 @@
   <label class="up-only">Photos</label>
   <label class="pick up-only" id="pick" for="files"><span id="pickTxt">Add photos</span><input id="files" type="file" accept="image/*" multiple></label>
   <div id="thumbs" class="thumbs up-only"></div>
+
+  <details id="visitBox" class="visit up-only">
+    <summary>Couldn't take photos at this building?</summary>
+    <label for="visitOutcome">What happened</label>
+    <select id="visitOutcome">
+      <option value="">Choose…</option>
+      <option value="refused">1 - Not allowed to shoot</option>
+      <option value="nodir">2 - No tenant directory</option>
+    </select>
+    <label for="visitNote">Note (optional)</label>
+    <input id="visitNote" type="text" maxlength="300" placeholder="e.g. Guard said management approval needed" autocomplete="off">
+    <p class="sum-note">The visit date is the Shoot date above. "Not allowed" keeps the building on the outstanding list. "No tenant directory" marks it as completed without photos; it will not be scheduled again unless someone uploads photos later.</p>
+    <p id="visitMsg" class="msg" role="status"></p>
+    <button id="visitSave" class="btn ghost">Record visit</button>
+  </details>
 </main>
 
 <main id="all" class="hidden">
@@ -307,7 +392,7 @@
     </div>
     <div class="key">
       <span><i class="k-done"></i>Shot</span><span><i class="k-overdue"></i>Overdue</span>
-      <span><i class="k-month"></i>Due this month</span><span><i></i>Later</span>
+      <span><i class="k-month"></i>Due this month</span><span><i class="k-ref"></i>Not allowed</span><span><i></i>Later</span><span><i class="k-nodir"></i>No directory</span>
     </div>
   </div>
   <div id="allBody"><p class="ov-empty">Loading…</p></div>
@@ -356,6 +441,16 @@
     <button id="uClear" class="btn ghost">Clear form</button>
   </section>
   <div id="uList"><p class="ov-empty">Loading…</p></div>
+</main>
+
+<main id="tenScr" class="hidden">
+  <button id="closeTen" class="linkbtn" style="margin-top:0">Back to photos</button>
+  <h1 id="tenTitle" style="margin:12px 0 4px">Tenants</h1>
+  <p id="tenNote" class="sum-note" style="margin-top:0"></p>
+  <div id="tenSum" class="tsum"></div>
+  <div class="filters" id="tenFilter"></div>
+  <button id="tenDl" class="linkbtn up-only">Download sheet (.xlsx)</button>
+  <div id="tenBody"><p class="ov-empty">Loading…</p></div>
 </main>
 
 <main id="photosScr" class="hidden">
@@ -431,7 +526,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt
 function gateMsg(t, cls){ $('#gateMsg').textContent = t || ''; $('#gateMsg').className = 'msg ' + (cls || ''); }
 
 function showGate(msg){
-  ['#app','#all','#photosScr','#addScr','#usersScr','#bar','#viewer'].forEach(id => $(id) && $(id).classList.add('hidden'));
+  ['#app','#all','#photosScr','#tenScr','#addScr','#usersScr','#bar','#viewer'].forEach(id => $(id) && $(id).classList.add('hidden'));
   $('#gate').classList.remove('hidden');
   gateMsg(msg || '', msg ? 'err' : '');
   initGsi();
@@ -527,6 +622,8 @@ function stateLabel(b){
     case 'overdue': return `Overdue, ${b.planned}`;
     case 'month': return 'Due this month';
     case 'upcoming': return 'Due ' + b.planned;
+    case 'refused': return 'Not allowed, ' + b.visit;
+    case 'nodir': return 'No directory';
     default: return 'Not planned';
   }
 }
@@ -536,8 +633,10 @@ let SUM = null, SUM_VIEW = store.get('dir_view') || 'Active';
 function pick(r, view){
   if (view !== 'All') return r[view];
   return ['Active','Semi-active','Inactive'].reduce((t, k) =>
-    ({ total: t.total + r[k].total, done: t.done + r[k].done, overdue: t.overdue + r[k].overdue, addons: t.addons + (r[k].addons || 0) }),
-    { total:0, done:0, overdue:0, addons:0 });
+    ({ total: t.total + r[k].total, done: t.done + r[k].done, overdue: t.overdue + r[k].overdue, addons: t.addons + (r[k].addons || 0),
+       month: t.month + (r[k].month || 0), planned: t.planned + (r[k].planned || 0),
+       refused: t.refused + (r[k].refused || 0), nodir: t.nodir + (r[k].nodir || 0) }),
+    { total:0, done:0, overdue:0, addons:0, month:0, planned:0, refused:0, nodir:0 });
 }
 
 function renderSummary(sum){
@@ -547,25 +646,38 @@ function renderSummary(sum){
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-selected', b.dataset.s === view));
 
   $('#sumDue').textContent = view === 'All'
-    ? 'All groups. Completed = shot within its own frequency.'
-    : `Completed = shot within the last ${SUM.cycles[view].months || (SUM.freq || {})[view]} months. Never-shot buildings follow the starting plan from ${SUM.startLabel}.`;
+    ? 'All groups. Completed = photos within its frequency, or no tenant directory.'
+    : `Completed = photos within the last ${SUM.cycles[view].months || (SUM.freq || {})[view]} months, or visited with no tenant directory. Never-shot buildings follow the starting plan from ${SUM.startLabel}.`;
 
   const t = pick(SUM.totals, view);
-  const pct = t.total ? Math.round(t.done / t.total * 100) : 0;
-  $('#kDone').textContent = t.done;
-  $('#kLeft').textContent = t.total - t.done;
+  const resolved = t.done + (t.nodir || 0);              // photos + no tenant directory
+  const pct = t.total ? Math.round(resolved / t.total * 100) : 0;
+  $('#kDone').textContent = resolved;
+  $('#kLeft').textContent = t.total - resolved;
   $('#kTotal').textContent = t.total;
   $('#kBar').style.width = pct + '%';
+  const P100 = n => t.total ? Math.round((n || 0) / t.total * 100) + '%' : '0%';
+  $('#kCats').innerHTML = `
+    <div class="c-done"><span>Completed (photos)</span><b>${t.done} · ${P100(t.done)}</b></div>
+    <div class="c-nodir"><span>No directory</span><b>${t.nodir || 0} · ${P100(t.nodir)}</b></div>
+    <div class="c-month"><span>Due this month</span><b>${t.month || 0} · ${P100(t.month)}</b></div>
+    <div class="c-over"><span>Overdue</span><b>${t.overdue} · ${P100(t.overdue)}</b></div>
+    <div class="c-ref"><span>Visited, not allowed</span><b>${t.refused || 0} · ${P100(t.refused)}</b></div>
+    <div><span>Not yet shot</span><b>${t.planned || 0} · ${P100(t.planned)}</b></div>
+`;
+  $('#expBtn').textContent = `Download ${view === 'All' ? 'all groups' : GRP[view]} (.xlsx)`;
 
-  const row = (label, c, tag) => {
-    const p = c.total ? Math.round(c.done / c.total * 100) : 0;
-    const add = c.addons ? `<small class="addon-note">incl. ${c.addons} added</small>` : '';
-    return `<tr><td>${esc(label)}${add}</td><td class="done">${c.done}</td><td class="left">${c.total - c.done}</td><td>${c.total}</td>
-      <td class="pr"><div class="pb"><i style="width:${p}%"></i></div>
-      <small class="${c.overdue ? 'od' : ''}">${c.overdue ? c.overdue + ' overdue' : p + '%'}</small></td></tr>`;
+  const CAT = [['done','s-done','Completed (photos)'],['nodir','s-nodir','No directory'],['month','s-month','Due this month'],['overdue','s-over','Overdue'],
+               ['refused','s-ref','Visited, not allowed'],['planned','s-plan','Not yet shot']];
+  const card = (label, c, isTotal) => {
+    const pc = k => c.total ? (c[k] || 0) / c.total * 100 : 0;
+    return `<${isTotal ? 'div' : 'button'} class="acard${isTotal ? ' total' : ''}" ${isTotal ? '' : `data-area="${esc(label)}"`}>
+      <div class="ac-h"><b>${esc(label)}</b><span>${c.total} buildings${c.addons ? `, incl. ${c.addons} added` : ''}</span></div>
+      <div class="stack">${CAT.map(([k, cls]) => `<i class="${cls}" style="width:${pc(k)}%"></i>`).join('')}</div>
+      <div class="ac-p">${CAT.map(([k, cls, nm]) => `<span><i class="${cls}"></i>${nm} <b>${c[k] || 0} · ${Math.round(pc(k))}%</b></span>`).join('')}</div>
+    </${isTotal ? 'div' : 'button'}>`;
   };
-  $('#sumBody').innerHTML = SUM.areas.map(r => row(r.area, pick(r, view))).join('');
-  $('#sumFoot').innerHTML = row('Total', t);
+  $('#areaCards').innerHTML = SUM.areas.map(r => card(r.area, pick(r, view), false)).join('') + card('All areas', t, true);
 
   const groups = view === 'All' ? ['Active','Semi-active','Inactive'] : [view];
   const ppl = (SUM.people || [])
@@ -590,9 +702,9 @@ document.querySelector('.seg').onclick = e => {
   SUM_VIEW = b.dataset.s; store.set('dir_view', SUM_VIEW); renderSummary();
 };
 
-$('#sumBody').onclick = e => {
-  const tr = e.target.closest('tr'); if (!tr) return;
-  const area = tr.firstElementChild.textContent;
+$('#areaCards').onclick = e => {
+  const tr = e.target.closest('.acard[data-area]'); if (!tr) return;
+  const area = tr.dataset.area;
   F.group = SUM_VIEW; F.notShot = true; $('#q').value = '';
   if ($('#area').value !== area){ $('#area').value = area; loadBuildings(); } else renderList();
   $('#q').scrollIntoView({ behavior:'smooth', block:'start' });
@@ -688,6 +800,7 @@ async function openPhotos(area, building, label){
       <section class="shoot">
         <div class="shoot-h"><span><b>${esc(fmtShoot(sh.date))}</b><br><small>${sh.files.length} photo${sh.files.length>1?'s':''}</small></span>
           ${sh.files.length > 1 ? `<button class="zipbtn up-only" data-zip="${esc(sh.date)}">Download all (.zip)</button>` : ''}</div>
+        ${tenantStatusHtml(sh)}
         <div class="pgrid">${sh.files.map(f => `
           <div class="ptile">
             <div class="ph" data-thumb="${esc(f.id)}" data-view="${esc(f.id)}">Loading…</div>
@@ -708,6 +821,68 @@ async function loadThumbs(){
     } catch(_){ el.textContent = 'Preview unavailable'; }
   }
 }
+
+/* ── Tenant reading status per shoot ── */
+function tenantStatusHtml(sh){
+  const r = sh.review || {};
+  if (r.status === 'Ready for review'){
+    const c = r.counts || {};
+    return `<div class="tstat"><span><span class="pill ready">Tenants read</span> <b>${c.tenants || 0}</b> tenants:
+      ${c.fresh || 0} new, ${c.movedIn || 0} moved in, ${c.movedOut || 0} moved out</span>
+      <span class="tbtns"><button data-ten="${esc(sh.date)}">View tenant list</button>
+      <button class="up-only" data-tendl="${esc(sh.date)}">Download sheet</button></span></div>`;
+  }
+  if (r.status === 'Waiting for reading')
+    return '<div class="tstat"><span><span class="pill wait">Waiting for reading</span> The tenant list will appear here after the next reading run.</span></div>';
+  return `<div class="tstat"><span><span class="pill none">${esc(r.status || 'Not read')}</span></span></div>`;
+}
+
+const T = { data: null, filter: 'All', date: '' };
+const TCLASS = r => /^Moved out/.test(r) ? 't-out' : /^Moved in/.test(r) ? 't-in' : /^New/.test(r) ? 't-new' : /^Check/.test(r) ? 't-chk' : /^Possible/.test(r) ? 't-pos' : '';
+const TFILTERS = [['All', ''], ['New', 'New'], ['Moved in', 'Moved in'], ['Moved out', 'Moved out'], ['To check', 'Check|Possible'], ['Same', 'Same']];
+
+async function openTenants(date){
+  T.date = date; T.filter = 'All';
+  $('#photosScr').classList.add('hidden'); $('#tenScr').classList.remove('hidden'); window.scrollTo(0,0);
+  $('#tenTitle').textContent = $('#phTitle').textContent;
+  $('#tenNote').textContent = 'Shoot ' + fmtShoot(date) + '. Compared with Pipedrive Organisations; nothing in Pipedrive has been changed.';
+  $('#tenBody').innerHTML = '<p class="ov-empty">Loading…</p>'; $('#tenSum').innerHTML = ''; $('#tenFilter').innerHTML = '';
+  try { T.data = await api('tenantReview', { area:P.area, building:P.building, date }); renderTenants(); }
+  catch(e){ $('#tenBody').innerHTML = `<p class="ov-empty" style="color:var(--late)">${esc(e.message)}</p>`; }
+}
+
+function renderTenants(){
+  const c = T.data.counts || {};
+  $('#tenSum').innerHTML = `<div><b>${c.tenants || 0}</b><span>on the board</span></div>
+    <div class="k-new"><b>${c.fresh || 0}</b><span>new (not in Pipedrive)</span></div>
+    <div class="k-in"><b>${c.movedIn || 0}</b><span>moved in?</span></div>
+    <div class="k-out"><b>${c.movedOut || 0}</b><span>moved out?</span></div>
+    <div><b>${(c.possible || 0) + (c.check || 0)}</b><span>to check</span></div>
+    <div><b>${c.same || 0}</b><span>same building</span></div>`;
+  $('#tenFilter').innerHTML = TFILTERS.map(([l]) => `<button class="chip" data-tf="${l}" aria-pressed="${T.filter === l}">${l}</button>`).join('');
+  const re = new RegExp('^(' + (TFILTERS.find(f => f[0] === T.filter) || ['', ''])[1] + ')');
+  const rows = T.data.rows.filter(r => T.filter === 'All' || re.test(r[0]));
+  $('#tenBody').innerHTML = rows.length ? rows.map(r => `
+    <div class="trow ${TCLASS(r[0])}"><span class="r">${esc(r[0])}</span>
+      <b>${esc(r[1] || r[4])}</b>
+      ${r[2] ? `<small>Floor / unit: ${esc(r[2])}</small>` : ''}
+      ${r[4] && r[1] ? `<small>Pipedrive: ${esc(r[4])}</small>` : ''}
+      ${r[5] ? `<small>Pipedrive address: ${esc(r[5])}</small>` : ''}
+      ${r[7] ? `<small>${esc(r[7])}</small>` : ''}
+      ${r[6] ? `<small><a href="${esc(r[6])}" target="_blank" rel="noopener">Open in Pipedrive</a></small>` : ''}
+    </div>`).join('') : '<p class="ov-empty">Nothing in this group.</p>';
+}
+
+$('#tenFilter').onclick = e => { const c = e.target.closest('[data-tf]'); if (!c) return; T.filter = c.dataset.tf; renderTenants(); };
+$('#closeTen').onclick = () => { $('#tenScr').classList.add('hidden'); $('#photosScr').classList.remove('hidden'); };
+
+async function downloadTenantSheet(date, btn){
+  const label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
+  try { const r = await api('tenantSheet', { area:P.area, building:P.building, date }); saveBlob(b64ToBlob(r.b64, r.mime), r.name); btn.textContent = 'Downloaded'; }
+  catch(e){ btn.textContent = 'Failed, tap to retry'; alert(e.message); }
+  finally { btn.disabled = false; setTimeout(() => { btn.textContent = label; }, 2500); }
+}
+$('#tenDl').onclick = () => downloadTenantSheet(T.date, $('#tenDl'));
 
 function closePhotos(){
   if (typeof closeViewer === 'function') closeViewer();
@@ -759,6 +934,10 @@ async function sharePhoto(f){
 $('#phBody').onclick = async e => {
   const v = e.target.closest('[data-view]');
   if (v){ openViewer(v.dataset.view); return; }
+  const tv = e.target.closest('[data-ten]');
+  if (tv){ openTenants(tv.dataset.ten); return; }
+  const td = e.target.closest('[data-tendl]');
+  if (td){ downloadTenantSheet(td.dataset.tendl, td); return; }
   const zip = e.target.closest('button[data-zip]'); if (!zip || zip.disabled) return;
   const label = zip.textContent; zip.disabled = true; zip.textContent = 'Preparing…';
   try { const r = await call('getShootZip', S.pin, P.area, P.building, zip.dataset.zip); saveBlob(b64ToBlob(r.b64, r.mime), r.name); zip.textContent = 'Downloaded'; }
@@ -786,6 +965,17 @@ document.addEventListener('keydown', e => {
 $('#closePhotos').onclick = closePhotos;
 $('#viewPhotos').onclick = () => S.building && openPhotos($('#area').value, S.building.name, S.building.label);
 
+$('#expBtn').onclick = async () => {
+  const btn = $('#expBtn'), label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Preparing…'; $('#expMsg').textContent = '';
+  try {
+    const r = await api('exportBuildings', { group: SUM_VIEW, list: $('#expList').value });
+    saveBlob(b64ToBlob(r.b64, r.mime), r.name);
+    $('#expMsg').textContent = `${r.count} building${r.count === 1 ? '' : 's'} exported.`;
+  } catch(e){ $('#expMsg').textContent = e.message; }
+  finally { btn.disabled = false; btn.textContent = label; }
+};
+
 async function refreshSummary(){
   try { renderSummary(await call('getSummary', S.pin)); } catch(_){}
 }
@@ -795,7 +985,7 @@ const GRP = { 'Active':'Active', 'Semi-active':'Semi', 'Inactive':'Inactive' };
 
 function passes(b, f, q){
   if (f.group !== 'All' && b.status !== f.group) return false;
-  if (f.notShot && b.state === 'done') return false;
+  if (f.notShot && (b.state === 'done' || b.state === 'nodir')) return false;
   return !q || b.name.toLowerCase().includes(q) || (b.label||'').toLowerCase().includes(q) || (b.street||'').toLowerCase().includes(q);
 }
 
@@ -818,7 +1008,7 @@ function itemHtml(b, area, showArea){
   const sel = S.building && S.building.name === b.name && $('#area').value === area;
   return `
     <button class="item st-${b.state}" role="option" aria-selected="${sel}" data-n="${esc(b.name)}" data-a="${esc(area)}">
-      <span class="n"><b>${showArea ? `<span class="abadge">${esc(area)}</span>` : ''}${esc(b.label || b.name)}${b.addon ? '<span class="addon-tag">ADDED</span>' : ''}</b><small><span class="grp">${GRP[b.status]}</span>${b.street ? ', ' + esc(b.street) : ''}${b.last ? ', last ' + esc(b.last) : ', never shot'}${b.state === 'done' && b.planned ? ', next due ' + esc(b.planned) : ''}</small></span>
+      <span class="n"><b>${showArea ? `<span class="abadge">${esc(area)}</span>` : ''}${esc(b.label || b.name)}${b.addon ? '<span class="addon-tag">ADDED</span>' : ''}</b><small><span class="grp">${GRP[b.status]}</span>${b.street ? ', ' + esc(b.street) : ''}${b.last ? ', last ' + esc(b.last) : ', never shot'}${b.state === 'done' && b.planned ? ', next due ' + esc(b.planned) : ''}${b.state === 'refused' ? ', still due ' + esc(b.planned || '') : ''}${b.state === 'nodir' ? ', visited ' + esc(b.visit) + ', no more shoots' : ''}${b.visitNote ? ' (' + esc(b.visitNote) + ')' : ''}</small></span>
       <span class="tag d-${b.state}">${esc(stateLabel(b))}</span>
     </button>`;
 }
@@ -1090,6 +1280,27 @@ $('#addSave').onclick = async () => {
   } catch(e){ $('#addMsg').textContent = e.message; $('#addMsg').className = 'msg err'; }
   finally { $('#addSave').disabled = false; }
 };
+$('#visitSave').onclick = async () => {
+  const outcome = $('#visitOutcome').value;
+  if (!S.building){ $('#visitMsg').textContent = 'Choose a building first.'; $('#visitMsg').className = 'msg err'; return; }
+  if (!outcome){ $('#visitMsg').textContent = 'Choose what happened.'; $('#visitMsg').className = 'msg err'; return; }
+  const area = $('#area').value, name = S.building.name;
+  $('#visitSave').disabled = true; $('#visitMsg').textContent = 'Saving…'; $('#visitMsg').className = 'msg';
+  try {
+    const r = await api('recordVisit', { area, building: name, date: $('#date').value, outcome, note: $('#visitNote').value });
+    if (r.building){
+      const i = S.buildings.findIndex(b => b.name === name);
+      if (i >= 0) S.buildings[i] = r.building; syncIndex(area, S.buildings);
+      S.building = r.building;
+    }
+    $('#visitMsg').textContent = outcome === 'nodir' ? 'Recorded: no tenant directory. Counted as completed; no more shoots needed.' : 'Recorded: not allowed to shoot. It stays on the outstanding list.';
+    $('#visitMsg').className = 'msg ok';
+    $('#visitOutcome').value = ''; $('#visitNote').value = '';
+    renderList(); renderBoard(); refreshSummary();
+  } catch(e){ $('#visitMsg').textContent = e.message; $('#visitMsg').className = 'msg err'; }
+  finally { $('#visitSave').disabled = false; }
+};
+
 $('#openAdd').onclick = openAdd;
 $('#closeAdd').onclick = closeAdd;
 
