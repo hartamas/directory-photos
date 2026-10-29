@@ -279,6 +279,20 @@
   .fold .export{border-top:0;padding-top:0;margin:0}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   @media (prefers-reduced-motion:reduce){.fold > summary::after{transition:none}}
+  /* Approvals */
+  .acard2{background:#fff;border:1px solid var(--line);border-left:5px solid var(--soon);border-radius:8px;padding:12px;margin-top:10px}
+  .acard2.out{border-left-color:var(--late)} .acard2.new{border-left-color:var(--act)}
+  .acard2 label.kv{display:block;margin:8px 0 0;font-weight:400}
+  .acard2 .t{font-size:.75rem;font-weight:600;color:var(--muted)}
+  .acard2 h3{margin:2px 0 8px;font:600 1.05rem Barlow,sans-serif}
+  .acard2 .kv{font-size:.85rem;margin:4px 0;overflow-wrap:anywhere}
+  .acard2 .kv span{display:block;font-size:.72rem;color:var(--muted)}
+  .acard2 textarea{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;min-height:64px;margin-top:4px}
+  .acard2 input{margin-top:4px}
+  .acard2 .ab{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:10px}
+  .acard2 .ab .btn{min-height:46px;font-size:.95rem}
+  .acard2 a{color:var(--act);font-weight:600}
+  .ub-badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--late);color:#fff;font-size:.7rem;line-height:18px;text-align:center}
   .hidden{display:none!important}
   .lock{max-width:360px;margin:12vh auto 0}
   @media (prefers-reduced-motion:reduce){.prog i{transition:none}}
@@ -298,7 +312,7 @@
 <main id="app" class="hidden">
   <h1>Tenant directory photos</h1>
   <div class="userbar">Signed in as <b id="meName"></b><span id="meRole" class="rolebadge"></span>
-    <button id="openUsers" class="ub-btn hidden">Users</button><button id="signOut" class="ub-btn">Sign out</button></div>
+    <button id="openAppr" class="ub-btn hidden">Approvals</button><button id="openUsers" class="ub-btn hidden">Users</button><button id="signOut" class="ub-btn">Sign out</button></div>
 
   <section id="sum" class="sum" aria-label="Shooting progress">
     <div class="seg" role="tablist" aria-label="Building group">
@@ -444,6 +458,16 @@
   </div>
 </main>
 
+<main id="apprScr" class="hidden">
+  <button id="closeAppr" class="linkbtn" style="margin-top:0">Back</button>
+  <h1 style="margin:12px 0 4px">Pipedrive approvals</h1>
+  <p class="sum-note" style="margin-top:0">Every company is checked by a web search first. Nothing is changed in Pipedrive until you approve. Approving updates (or creates) the organisation with the address, website, phone, email and LinkedIn link, and adds a note with the source and your name.</p>
+  <p id="apprInfo" class="sum-m"></p>
+  <div id="apprList"><p class="ov-empty">Loading…</p></div>
+  <details class="fold" id="apprNF"><summary><span>No address found</span><small id="apprNFc"></small></summary><div id="apprNFList"></div></details>
+  <details class="fold"><summary><span>Recently decided</span><small id="apprRc"></small></summary><div id="apprRecent"></div></details>
+</main>
+
 <main id="usersScr" class="hidden">
   <button id="closeUsers" class="linkbtn" style="margin-top:0">Back</button>
   <h1 style="margin:12px 0 4px">Users</h1>
@@ -549,7 +573,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt
 function gateMsg(t, cls){ $('#gateMsg').textContent = t || ''; $('#gateMsg').className = 'msg ' + (cls || ''); }
 
 function showGate(msg){
-  ['#app','#all','#photosScr','#tenScr','#addScr','#usersScr','#bar','#viewer'].forEach(id => $(id) && $(id).classList.add('hidden'));
+  ['#app','#all','#photosScr','#tenScr','#addScr','#usersScr','#apprScr','#bar','#viewer'].forEach(id => $(id) && $(id).classList.add('hidden'));
   $('#gate').classList.remove('hidden');
   gateMsg(msg || '', msg ? 'err' : '');
   initGsi();
@@ -604,6 +628,8 @@ async function boot(){
   $('#meName').textContent = b.user.name;
   $('#meRole').textContent = b.user.role;
   $('#openUsers').classList.toggle('hidden', b.user.role !== 'Admin');
+  $('#openAppr').classList.toggle('hidden', b.user.role !== 'Admin');
+  setApprBadge(b.pendingApprovals || 0);
   $('#who').value = b.user.name;
   const opts = b.areas.map(a => `<option>${esc(a)}</option>`).join('');
   $('#area').innerHTML = opts; $('#addArea').innerHTML = opts;
@@ -1329,6 +1355,78 @@ $('#visitSave').onclick = async () => {
 
 $('#openAdd').onclick = openAdd;
 $('#closeAdd').onclick = closeAdd;
+
+/* ══ Pipedrive approvals (Admin only) ══ */
+function setApprBadge(n){ $('#openAppr').innerHTML = 'Approvals' + (n ? `<span class="ub-badge">${n}</span>` : ''); }
+
+async function openAppr(){
+  ['#app','#bar'].forEach(id => $(id).classList.add('hidden'));
+  $('#apprScr').classList.remove('hidden'); window.scrollTo(0,0);
+  $('#apprList').innerHTML = '<p class="ov-empty">Loading…</p>';
+  try { renderAppr(await api('listApprovals')); }
+  catch(e){ $('#apprList').innerHTML = `<p class="ov-empty" style="color:var(--late)">${esc(e.message)}</p>`; }
+}
+function closeAppr(){ $('#apprScr').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#bar').classList.remove('hidden'); }
+
+function apprCard(a, editable){
+  const T = { 'Moved out': ['out', 'MOVED OUT of '], 'Moved in': ['in', 'MOVED IN to '], 'New company': ['new', 'NEW at '] }[a.type] || ['', ''];
+  const F = APPR.fields || {};
+  const fld = (k, label, val, ph) => `<label class="kv"><span>${label}${k !== 'address' && k !== 'name' && !F[k] ? ' (no Pipedrive field: goes into the note)' : ''}</span>
+      <input type="text" data-f="${k}" value="${esc(val || '')}" placeholder="${ph}"></label>`;
+  const link = v => v ? (/^https?:/.test(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>` : esc(v)) : '-';
+  return `<div class="acard2 ${T[0]}" data-id="${esc(a.id)}">
+    <span class="t">${T[1]}${esc(a.fromBuilding)}${a.shootDate ? ' · board shot ' + esc(a.shootDate) : ''}</span>
+    <h3>${esc(a.company)}</h3>
+    ${a.type !== 'New company' ? `<div class="kv"><span>Pipedrive address now</span>${esc(a.currentAddress || '-')}</div>` : ''}
+    <div class="kv"><span>Found by search${a.confidence !== '' && a.confidence !== undefined ? ' (confidence ' + esc(a.confidence) + ')' : ''}</span>${link(a.source)}</div>
+    ${a.result ? `<div class="kv"><span>Search notes</span>${esc(a.result)}</div>` : ''}
+    ${a.link ? `<div class="kv"><a href="${esc(a.link)}" target="_blank" rel="noopener">Open in Pipedrive</a></div>` : ''}
+    ${editable ? `
+      ${a.type === 'New company' ? fld('name', 'Company name for Pipedrive', a.legalName || a.company, 'Legal name') : ''}
+      <label class="kv"><span>Address</span><textarea data-f="address">${esc(a.suggested || '')}</textarea></label>
+      ${fld('website', 'Website', a.website, 'https://')}
+      ${fld('phone', 'Phone', a.phone, '+60 3-…')}
+      ${fld('email', 'Email', a.email, 'info@…')}
+      ${fld('linkedin', 'LinkedIn page', a.linkedin, 'https://www.linkedin.com/company/…')}
+      <div class="kv">${a.website ? `<a href="${esc(a.website)}" target="_blank" rel="noopener">Check website</a> · ` : ''}${a.linkedin ? `<a href="${esc(a.linkedin)}" target="_blank" rel="noopener">Check LinkedIn</a>` : ''}</div>
+      <label class="kv"><span>Note (optional)</span><input type="text" data-note placeholder="e.g. Confirmed by phone"></label>
+      <p class="msg" data-msg></p>
+      <div class="ab"><button class="btn" data-act="approve">${a.type === 'New company' ? 'Approve and create in Pipedrive' : 'Approve and update Pipedrive'}</button><button class="btn ghost" data-act="reject">Reject</button></div>`
+    : `<div class="kv"><span>Decision</span>${esc(a.status)}${a.decidedBy ? ' by ' + esc(a.decidedBy) : ''}${a.decidedAt ? ', ' + esc(a.decidedAt) : ''}${a.suggested ? ' · ' + esc(a.suggested) : ''}</div>`}
+  </div>`;
+}
+
+let APPR = {};
+function renderAppr(d){
+  APPR = d;
+  setApprBadge(d.pending.length);
+  $('#apprInfo').innerHTML = `<b>${d.pending.length}</b> waiting for your approval` + (d.waiting ? ` · ${d.waiting} companies still being searched (moved out first, then moved in, then new)` : '');
+  $('#apprList').innerHTML = d.pending.length ? d.pending.map(a => apprCard(a, true)).join('') : '<p class="ov-empty">Nothing to approve right now.</p>';
+  $('#apprNFc').textContent = d.notFound.length ? d.notFound.length + ' (you can type an address)' : 'none';
+  $('#apprNFList').innerHTML = d.notFound.map(a => apprCard(a, true)).join('') || '<p class="ov-empty">None.</p>';
+  $('#apprRc').textContent = d.recent.length ? d.recent.length + ' shown' : 'none';
+  $('#apprRecent').innerHTML = d.recent.map(a => apprCard(a, false)).join('') || '<p class="ov-empty">None yet.</p>';
+}
+
+$('#apprScr').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const card = b.closest('.acard2'), msg = card.querySelector('[data-msg]');
+  const decision = b.dataset.act;
+  if (decision === 'reject' && !confirm('Reject this change? Pipedrive will not be changed.')) return;
+  card.querySelectorAll('button').forEach(x => x.disabled = true);
+  msg.textContent = decision === 'approve' ? 'Updating Pipedrive…' : 'Saving…'; msg.className = 'msg';
+  try {
+    const v = k => { const el = card.querySelector(`[data-f="${k}"]`); return el ? el.value : ''; };
+    const d = await api('decideApproval', { id: card.dataset.id, decision, name: v('name'), address: v('address'),
+      website: v('website'), phone: v('phone'), email: v('email'), linkedin: v('linkedin'), note: card.querySelector('[data-note]').value });
+    renderAppr(d);
+  } catch(err){
+    msg.textContent = err.message; msg.className = 'msg err';
+    card.querySelectorAll('button').forEach(x => x.disabled = false);
+  }
+});
+$('#openAppr').onclick = openAppr;
+$('#closeAppr').onclick = closeAppr;
 
 /* ══ Users (Admin only) ══ */
 async function openUsers(){
