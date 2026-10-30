@@ -5,5 +5,5 @@ window.APP_CONFIG = {
   // Google Cloud → Directory Photos → Clients → Directory Photos web
   CLIENT_ID: '1046726853586-q6p1o703s8h5on94be8t4ilvrnenk53p.apps.googleusercontent.com',
   // Bump this AND version.json together when you publish an update; phones reload by themselves.
-  VERSION: '1.8.0',
+  VERSION: '1.10.0',
 };
