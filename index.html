@@ -283,6 +283,8 @@
   .acard2{background:#fff;border:1px solid var(--line);border-left:5px solid var(--soon);border-radius:8px;padding:12px;margin-top:10px}
   .acard2.out{border-left-color:var(--late)} .acard2.new{border-left-color:var(--act)}
   .acard2 label.kv{display:block;margin:8px 0 0;font-weight:400}
+  .outc label{display:flex;gap:10px;align-items:center;font-weight:600;font-size:.88rem;margin:6px 0;background:var(--stone);border-radius:8px;padding:10px;min-height:44px;cursor:pointer}
+  .outc input{width:20px;height:20px;accent-color:var(--board);flex:none}
   .acard2 .t{font-size:.75rem;font-weight:600;color:var(--muted)}
   .acard2 h3{margin:2px 0 8px;font:600 1.05rem Barlow,sans-serif}
   .acard2 .kv{font-size:.85rem;margin:4px 0;overflow-wrap:anywhere}
@@ -370,6 +372,11 @@
   <div class="row">
     <div><label for="area">Area</label><select id="area"></select></div>
     <div class="up-only"><label for="date">Shoot date</label><input id="date" type="date"></div>
+  </div>
+  <div id="forBox" class="hidden">
+    <label for="forWho">Upload for (Admin)</label>
+    <select id="forWho"></select>
+    <p class="sum-note" style="margin-top:4px">The upload or visit is credited to this person. The log notes that you entered it.</p>
   </div>
 
   <label for="q">Building</label>
@@ -631,6 +638,9 @@ async function boot(){
   $('#openAppr').classList.toggle('hidden', b.user.role !== 'Admin');
   setApprBadge(b.pendingApprovals || 0);
   $('#who').value = b.user.name;
+  const team = b.team || [];
+  $('#forBox').classList.toggle('hidden', b.user.role !== 'Admin' || !team.length);
+  $('#forWho').innerHTML = `<option value="">Me (${esc(b.user.name)})</option>` + team.map(t => `<option value="${esc(t.email)}">${esc(t.name)}</option>`).join('');
   const opts = b.areas.map(a => `<option>${esc(a)}</option>`).join('');
   $('#area').innerHTML = opts; $('#addArea').innerHTML = opts;
   $('#date').value = b.today; $('#date').max = b.today;
@@ -1130,7 +1140,8 @@ function renderBoard(){
   const bd = $('#board'), base = baseName();
   bd.classList.toggle('empty', !base);
   bd.querySelector('.bname').textContent = base || 'Choose a building';
-  bd.querySelector('.meta').textContent = S.building ? `${$('#area').value} · ${S.building.status}` : '';
+  const forName = $('#forWho') && $('#forWho').value ? $('#forWho').selectedOptions[0].textContent : '';
+  bd.querySelector('.meta').textContent = S.building ? `${$('#area').value} · ${S.building.status}${forName ? ' · for ' + forName : ''}` : '';
   const n = S.photos.length;
   bd.querySelector('.files').textContent = base && n
     ? (n === 1 ? `${base} - 1.jpg` : `${base} - 1.jpg … ${base} - ${n}.jpg`) : '';
@@ -1230,7 +1241,7 @@ $('#go').onclick = async () => {
   }
 
   if (S.uploaded.length){
-    try { await call('finalizeBatch', S.pin, { area, building, shootDate, uploader, files:S.uploaded, folderUrl }); }
+    try { await call('finalizeBatch', S.pin, { area, building, shootDate, uploader, files:S.uploaded, folderUrl, onBehalf: $('#forWho').value }); }
     catch(e){ setMsg(`Photos saved, but the log entry failed: ${e.message}`, 'err'); }
   }
 
@@ -1332,6 +1343,8 @@ $('#addSave').onclick = async () => {
   } catch(e){ $('#addMsg').textContent = e.message; $('#addMsg').className = 'msg err'; }
   finally { $('#addSave').disabled = false; }
 };
+$('#forWho').onchange = () => renderBoard();
+
 $('#visitSave').onclick = async () => {
   const outcome = $('#visitOutcome').value;
   if (!S.building){ $('#visitMsg').textContent = 'Choose a building first.'; $('#visitMsg').className = 'msg err'; return; }
@@ -1339,7 +1352,7 @@ $('#visitSave').onclick = async () => {
   const area = $('#area').value, name = S.building.name;
   $('#visitSave').disabled = true; $('#visitMsg').textContent = 'Saving…'; $('#visitMsg').className = 'msg';
   try {
-    const r = await api('recordVisit', { area, building: name, date: $('#date').value, outcome, note: $('#visitNote').value });
+    const r = await api('recordVisit', { area, building: name, date: $('#date').value, outcome, note: $('#visitNote').value, onBehalf: $('#forWho').value });
     if (r.building){
       const i = S.buildings.findIndex(b => b.name === name);
       if (i >= 0) S.buildings[i] = r.building; syncIndex(area, S.buildings);
@@ -1380,8 +1393,14 @@ function apprCard(a, editable){
     ${a.type !== 'New company' ? `<div class="kv"><span>Pipedrive address now</span>${esc(a.currentAddress || '-')}</div>` : ''}
     <div class="kv"><span>Found by search${a.confidence !== '' && a.confidence !== undefined ? ' (confidence ' + esc(a.confidence) + ')' : ''}</span>${link(a.source)}</div>
     ${a.result ? `<div class="kv"><span>Search notes</span>${esc(a.result)}</div>` : ''}
+    ${a.type === 'Moved out' && a.companyStatus ? `<div class="kv"><span>Company status found</span><b>${esc(a.companyStatus)}</b>${a.statusEvidence ? ' · ' + link(a.statusEvidence) : ''}</div>` : ''}
     ${a.link ? `<div class="kv"><a href="${esc(a.link)}" target="_blank" rel="noopener">Open in Pipedrive</a></div>` : ''}
     ${editable ? `
+      ${a.type === 'Moved out' ? `<div class="kv outc"><span>What happened to this company?</span>
+        <label><input type="radio" name="o-${esc(a.id)}" value="relocated" ${/clos|wound|dissol|liquid/i.test(a.companyStatus || '') ? '' : 'checked'}> Relocated: update the address and contacts</label>
+        <label><input type="radio" name="o-${esc(a.id)}" value="closed" ${/clos|wound|dissol|liquid/i.test(a.companyStatus || '') ? 'checked' : ''}> Closed / wound up: add a note only</label>
+        <label><input type="radio" name="o-${esc(a.id)}" value="stillhere"> Still at this building: no change</label></div>` : ''}
+      <div class="detail">
       ${a.type === 'New company' ? fld('name', 'Company name for Pipedrive', a.legalName || a.company, 'Legal name') : ''}
       <label class="kv"><span>Address</span><textarea data-f="address">${esc(a.suggested || '')}</textarea></label>
       ${fld('website', 'Website', a.website, 'https://')}
@@ -1389,10 +1408,13 @@ function apprCard(a, editable){
       ${fld('email', 'Email', a.email, 'info@…')}
       ${fld('linkedin', 'LinkedIn page', a.linkedin, 'https://www.linkedin.com/company/…')}
       <div class="kv">${a.website ? `<a href="${esc(a.website)}" target="_blank" rel="noopener">Check website</a> · ` : ''}${a.linkedin ? `<a href="${esc(a.linkedin)}" target="_blank" rel="noopener">Check LinkedIn</a>` : ''}</div>
+      </div>
       <label class="kv"><span>Note (optional)</span><input type="text" data-note placeholder="e.g. Confirmed by phone"></label>
+      ${['Moved out', 'Moved in'].includes(a.type) ? '<p class="sum-note">After approval, Andrea gets a "Verify" activity in Pipedrive.</p>' : ''}
       <p class="msg" data-msg></p>
       <div class="ab"><button class="btn" data-act="approve">${a.type === 'New company' ? 'Approve and create in Pipedrive' : 'Approve and update Pipedrive'}</button><button class="btn ghost" data-act="reject">Reject</button></div>`
-    : `<div class="kv"><span>Decision</span>${esc(a.status)}${a.decidedBy ? ' by ' + esc(a.decidedBy) : ''}${a.decidedAt ? ', ' + esc(a.decidedAt) : ''}${a.suggested ? ' · ' + esc(a.suggested) : ''}</div>`}
+    : `<div class="kv"><span>Decision</span>${esc(a.outcome || a.status)}${a.decidedBy ? ' by ' + esc(a.decidedBy) : ''}${a.decidedAt ? ', ' + esc(a.decidedAt) : ''}${a.suggested && a.outcome !== 'Closed / wound up' ? ' · ' + esc(a.suggested) : ''}</div>
+       ${a.followup ? `<div class="kv"><span>Follow-up</span>${esc(a.followup)}</div>` : ''}`}
   </div>`;
 }
 
@@ -1406,7 +1428,16 @@ function renderAppr(d){
   $('#apprNFList').innerHTML = d.notFound.map(a => apprCard(a, true)).join('') || '<p class="ov-empty">None.</p>';
   $('#apprRc').textContent = d.recent.length ? d.recent.length + ' shown' : 'none';
   $('#apprRecent').innerHTML = d.recent.map(a => apprCard(a, false)).join('') || '<p class="ov-empty">None yet.</p>';
+  document.querySelectorAll('#apprScr .outc input:checked').forEach(r => r.dispatchEvent(new Event('change', { bubbles: true })));
 }
+
+$('#apprScr').addEventListener('change', e => {
+  const r = e.target.closest('.outc input[type=radio]'); if (!r) return;
+  const card = r.closest('.acard2');
+  card.querySelector('.detail').classList.toggle('hidden', r.value !== 'relocated');
+  card.querySelector('[data-act="approve"]').textContent =
+    { relocated: 'Approve and update Pipedrive', closed: 'Approve: add closed note', stillhere: 'Confirm: no change' }[r.value];
+});
 
 $('#apprScr').addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
@@ -1417,7 +1448,8 @@ $('#apprScr').addEventListener('click', async e => {
   msg.textContent = decision === 'approve' ? 'Updating Pipedrive…' : 'Saving…'; msg.className = 'msg';
   try {
     const v = k => { const el = card.querySelector(`[data-f="${k}"]`); return el ? el.value : ''; };
-    const d = await api('decideApproval', { id: card.dataset.id, decision, name: v('name'), address: v('address'),
+    const oc = card.querySelector('.outc input:checked');
+    const d = await api('decideApproval', { id: card.dataset.id, decision, outcome: oc ? oc.value : '', name: v('name'), address: v('address'),
       website: v('website'), phone: v('phone'), email: v('email'), linkedin: v('linkedin'), note: card.querySelector('[data-note]').value });
     renderAppr(d);
   } catch(err){
